@@ -1,0 +1,14 @@
+CAPI=2:
+name: tinynocs:src:rtl-shared:0.0.1
+description: Shared RTL modules for NoC components
+
+filesets:
+  fifo_router:
+    files:
+      - fifo_router.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+      - fifo_router

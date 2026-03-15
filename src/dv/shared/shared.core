@@ -1,0 +1,35 @@
+CAPI=2:
+name: tinynocs:src:dv-shared:0.0.1
+description: Shared DV modules for NoC components
+
+filesets:
+  fifo_router:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - fifo_router.cc : {file_type: cppSource}
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    default_tool: verilator
+    tools:
+      verilator:
+        verilator_options:
+          - --assert
+          - -Wno-SYMRSVDWORD
+          - -Wno-ENUMVALUE
+          - -Wno-TIMESCALEMOD
+          - -Wno-lint
+          - --trace
+          - --trace-fst
+          - --trace-structs
+          - --trace-threads 4
+          - --threads 4
+          - -CFLAGS "-std=c++23"
+
+  tb_fifo_router:
+    <<: *default
+    toplevel: fifo_router
+    filesets_append:
+      - fifo_router
