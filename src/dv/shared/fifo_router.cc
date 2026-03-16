@@ -398,13 +398,13 @@ int main (int argc, char **argv) {
 
     for (std::deque<netReqPacket>::iterator it = commitBufferQueue.begin(); it != commitBufferQueue.end();) {
         std::cout << "[INFO] Committing Request from FIFO Router" << std::endl;
-        std::cout << "       req_comp         : " << dut.req_comp << std::endl;
+        std::cout << "       req_comp         : " << (bool) dut.req_comp << std::endl;
         std::cout << "       req_addr_comp    : 0x" << std::hex << dut.req_addr_comp << std::dec << std::endl;
-        std::cout << "       req_payload_comp : 0x" << std::hex << dut.req_payload_comp << std::dec << "\n" << std::endl;
-        std::cout << "       req_addr_comp    : 0x" << std::hex << it->addr << std::dec << std::endl;
-        std::cout << "       req_payload_comp : 0x" << std::hex << it->payload_comp << std::dec << "\n" << std::endl;
+        std::cout << "       expected addr    : 0x" << std::hex << it->addr << std::dec << std::endl;
+        std::cout << "       req_payload_comp : 0x" << std::hex << dut.req_payload_comp << std::dec << std::endl;
+        std::cout << "       expected payload : 0x" << std::hex << it->payload_comp << std::dec << "\n" << std::endl;
 
-        assert(dut.req_comp);
+        assert((bool) dut.req_comp);
         assert(it->addr == dut.req_addr_comp);
         assert(it->payload_comp == dut.req_payload_comp);
         tick(dut, trace);

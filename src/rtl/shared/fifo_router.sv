@@ -95,23 +95,21 @@ logic req_en;
 // Only enable when there is a requesting read or write
 assign req_en = req_ren || req_wen;
 
-always_ff @( posedge CLK, negedge nRST ) begin : blockName
+always_ff @( posedge CLK, negedge nRST ) begin : fifoRouterFF
     if (!nRST) begin
         fifo_router_buffer <= '0;
         fifo_router_full   <= 0;
         fifo_router_empty  <= 1;
-
-        req_pointer <= '0;
-        net_pointer <= '0;
+        req_pointer      <= '0;
+        net_pointer      <= '0;
         req_comp_pointer <= '0;
     end
     else begin
         fifo_router_buffer <= next_fifo_router_buffer;
         fifo_router_full   <= next_fifo_router_full;
         fifo_router_empty  <= next_fifo_router_empty;
-
-        req_pointer <= next_req_pointer;
-        net_pointer <= next_net_pointer;
+        req_pointer      <= next_req_pointer;
+        net_pointer      <= next_net_pointer;
         req_comp_pointer <= next_req_comp_pointer;
     end
 end
@@ -167,6 +165,7 @@ always_comb begin : entryUpdate
         req_comp = !fifo_router_empty;
         req_addr_comp = fifo_router_buffer[req_comp_pointer].addr;
         req_payload_comp = fifo_router_buffer[req_comp_pointer].rdata;
+
         next_req_comp_pointer = updatePointer(req_comp_pointer);
     end
 end
