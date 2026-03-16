@@ -1,4 +1,5 @@
 #include <atomic>
+#include <cassert>
 #include <cerrno>
 #include <chrono>
 #include <climits>
@@ -16,13 +17,23 @@
 #include "Vfifo_router.h"
 
 #define TRACE_NAME "waveform.fst"
+#define DUT_TYPE Vfifo_router
 
 struct TBCfg {
     bool trace_en;
     unsigned long cycle_limit;
-    Vfifo_router *dutp;
+    DUT_TYPE *dutp;
     VerilatedFstC *tracep;
 };
+
+struct netReqPacket {
+    bool wen;
+    uint64_t id;
+    uint64_t addr;
+    uint64_t wdata;
+    uint64_t payload_comp;
+};
+
 
 const TBCfg default_config {
     .trace_en = false,
@@ -33,16 +44,42 @@ const TBCfg default_config {
 
 static TBCfg config;
 
+std::deque<netReqPacket> even_net_packet_queue = {};
+std::deque<netReqPacket> odd_net_packet_queue = {};
+
 vluint64_t sim_time = 0;
 vluint64_t cycles = 0;
 
-void print_config(TBCfg& config) {
+void print_config(TBCfg& config);
+void print_help();
+auto parse_cli(int argc, char **argv) -> std::optional<TBCfg>;
+void signal_handler (int signum);
+void tick (DUT_TYPE& dut, VerilatedFstC& trace);
+void reset (DUT_TYPE& dut, VerilatedFstC& trace);
+void req_create (
+    DUT_TYPE& dut,
+    bool ren,
+    bool wen,
+    uint64_t req_addr,
+    uint64_t req_payload
+);
+void req_reset (DUT_TYPE& dut);
+void net_accept (
+    DUT_TYPE& dut,
+    bool ren,
+    bool wen,
+    uint64_t req_addr,
+    uint64_t req_payload
+);
+void net_reset (DUT_TYPE& dut);
+
+void print_config (TBCfg& config) {
     std::cout << "Configuration: " << std::endl;
     std::cout << "\tTrace: " << ((config.trace_en) ? "Enabled" : "Disabled") << std::endl;
     std::cout << "\tCycle Limit: " << config.cycle_limit << std::endl;
 }
 
-void print_help() {
+void print_help () {
     std::cerr << "Usage: ./Vfifo_router [flags...]" << std::endl;
     std::cerr << "\t--trace-en: Enable FST wave tracing" << std::endl;
     std::cerr << "\t--cycle-limit n: Set cycle count limit to n" << std::endl;
@@ -107,7 +144,7 @@ void signal_handler (int signum) {
     exit(1);
 }
 
-void tick (Vfifo_router& dut, VerilatedFstC& trace) {
+void tick (DUT_TYPE& dut, VerilatedFstC& trace) {
     dut.CLK = 0;
     dut.eval();
     if (config.trace_en)
@@ -121,33 +158,77 @@ void tick (Vfifo_router& dut, VerilatedFstC& trace) {
     sim_time++;
 
     cycles++;
+
+    req_reset(dut);
+    net_reset(dut);
 }
 
-void reset (Vfifo_router& dut, VerilatedFstC& trace) {
+void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
     // Initialize signals
     dut.CLK = 0;
     dut.nRST = 0;
+    req_reset(dut);
+    net_reset(dut);
+
+    tick(dut, trace);
+    dut.nRST = 0;
+    tick(dut, trace);
+    dut.nRST = 1;
+    tick(dut, trace);
+
+    tick(dut, trace);
+    dut.nRST = 0;
+    tick(dut, trace);
+    dut.nRST = 1;
+    tick(dut, trace);
+}
+
+void req_create (
+    DUT_TYPE& dut,
+    bool req_ren,
+    bool req_wen,
+    uint64_t req_addr,
+    uint64_t req_payload
+) {
+    std::cout << "[INFO] Creating Request to FIFO Router" << std::endl;
+    std::cout << "       req_ren     : " << req_ren << std::endl;
+    std::cout << "       req_wen     : " << req_wen << std::endl;
+    std::cout << "       req_addr    : 0x" << std::hex << req_addr << std::dec << std::endl;
+    std::cout << "       req_payload : 0x" << std::hex << req_payload << std::dec << std::endl;
+    dut.req_ren = req_ren;
+    dut.req_wen = req_wen;
+    dut.req_addr = req_addr;
+    dut.req_payload = req_payload;
+}
+
+void req_reset (DUT_TYPE& dut) {
+    // into FIFO buffer
     dut.req_ren = 0;
     dut.req_wen = 0;
     dut.req_addr = 0;
-
     dut.req_payload = 0;
+}
+
+void net_req_accept (
+    DUT_TYPE& dut
+) {
+
+}
+
+void net_req_comp (
+    DUT_TYPE& dut
+) {
+    
+}
+
+void net_reset (DUT_TYPE& dut){
+    // to network
     dut.net_en_comp = 0;
     dut.net_req_payload_comp = 0;
     dut.net_req_id_comp = 0;
-    dut.net_stall = 0;
 
-    tick(dut, trace);
-    dut.nRST = 0;
-    tick(dut, trace);
-    dut.nRST = 1;
-    tick(dut, trace);
-
-    tick(dut, trace);
-    dut.nRST = 0;
-    tick(dut, trace);
-    dut.nRST = 1;
-    tick(dut, trace);
+    // from network
+    dut.net_stall = 1;
 }
 
 int main (int argc, char **argv) {
@@ -159,7 +240,7 @@ int main (int argc, char **argv) {
 
     print_config(config);
 
-    Vfifo_router dut;
+    DUT_TYPE dut;
     VerilatedFstC trace;
 
     config.dutp = &dut;
@@ -177,14 +258,37 @@ int main (int argc, char **argv) {
     std::cout << " Simulation Begin" << std::endl;
     std::cout << "------------------" << std::endl;
 
+    std::srand(std::time(0));
     auto tstart = std::chrono::high_resolution_clock::now();
 
     reset(dut, trace);
 
-    while (0) {
+    tick(dut, trace);
 
+    // Empty Signal should be raised
+    assert(dut.fifo_router_empty);
+
+    // Fill the buffer
+    for (int i = 0; !dut.fifo_router_full; i++) {
+        uint32_t r1 = std::rand();
+        uint32_t r2 = std::rand();
+        req_create(dut,
+            r1 % 2,
+            (r1 + 1) % 2,
+            0x8000 + i * 8,
+            (( (uint64_t)(r1) ) << 32) + ( (uint64_t)(r2) )
+        );
+        tick(dut, trace);
     }
 
+    // sanity checks on FIFO being full
+    assert(dut.fifo_router_full);
+    for (int i = 0; i < 5; i++) {
+        tick(dut, trace);
+        assert(dut.fifo_router_full);
+    }
+
+    // End test bench
     auto tend = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart);
     std::cout   << "Simulated " << sim_time 

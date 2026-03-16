@@ -87,6 +87,8 @@ logic [DEPTH_BITS-1:0] req_pointer, next_req_pointer;
 logic [DEPTH_BITS-1:0] req_comp_pointer, next_req_comp_pointer;
 logic [DEPTH_BITS-1:0] net_pointer, next_net_pointer;
 
+logic next_fifo_router_full, next_fifo_router_empty;
+
 // Signal for enabling a write to the FIFO
 logic req_en;
 
@@ -96,9 +98,21 @@ assign req_en = req_ren || req_wen;
 always_ff @( posedge CLK, negedge nRST ) begin : blockName
     if (!nRST) begin
         fifo_router_buffer <= '0;
+        fifo_router_full   <= 0;
+        fifo_router_empty  <= 1;
+
+        req_pointer <= '0;
+        net_pointer <= '0;
+        req_comp_pointer <= '0;
     end
     else begin
         fifo_router_buffer <= next_fifo_router_buffer;
+        fifo_router_full   <= next_fifo_router_full;
+        fifo_router_empty  <= next_fifo_router_empty;
+
+        req_pointer <= next_req_pointer;
+        net_pointer <= next_net_pointer;
+        req_comp_pointer <= next_req_comp_pointer;
     end
 end
 
@@ -142,10 +156,47 @@ always_comb begin : entryUpdate
     end
 
     // Commiting the request back to the requester
+    // Requester MUST detect the completed data within a clock cycle
     if (fifo_router_buffer[req_comp_pointer].valid) begin
         req_comp = 1;
         req_addr_comp = fifo_router_buffer[req_comp_pointer].addr;
         req_payload_comp = fifo_router_buffer[req_comp_pointer].rdata;
+        next_req_comp_pointer = updatePointer(req_comp_pointer);
+    end
+end
+
+always_comb begin : controlFullEmpty
+    next_fifo_router_full = fifo_router_full;
+    next_fifo_router_empty = fifo_router_empty;
+
+    if (next_req_pointer == next_req_comp_pointer) begin
+        // FIFO will be full if:
+        // - requester makes a request
+        // - request is not completed
+        if (req_en && !req_comp) begin
+            next_fifo_router_full = 1;
+            next_fifo_router_empty = 0;
+        end
+
+        // FIFO will be empty if:
+        // - requester does not make a request
+        // - request is completed
+        else if (!req_en && req_comp) begin
+            next_fifo_router_full = 0;
+            next_fifo_router_empty = 1;
+        end
+
+        // Otherwise, FIFO remains unchanged and there
+        // was not a request created nor completed.
+        else begin
+            assert(!req_en);
+            assert(!req_comp);
+        end
+    end else begin
+        if (req_en)
+            next_fifo_router_empty = 0;
+        if (req_comp)
+            next_fifo_router_full = 0;
     end
 end
 
@@ -155,7 +206,7 @@ function logic [DEPTH_BITS-1:0] updatePointer;
     // DEPTH is a power of 2
     if ($clog2(DEPTH) != $clog2(DEPTH-1))
         updatePointer = pointer + 1;
-    
+
     // DEPTH is not a power of two, so we must do extra control
     else begin
         if (pointer == (DEPTH - 1))
