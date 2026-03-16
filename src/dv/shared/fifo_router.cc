@@ -30,10 +30,9 @@ struct netReqPacket {
     bool wen;
     uint64_t id;
     uint64_t addr;
-    uint64_t wdata;
+    uint64_t payload;
     uint64_t payload_comp;
 };
-
 
 const TBCfg default_config {
     .trace_en = false,
@@ -44,6 +43,8 @@ const TBCfg default_config {
 
 static TBCfg config;
 
+std::deque<netReqPacket> requestBufferQueue = {};
+std::deque<netReqPacket> commitBufferQueue = {};
 std::deque<netReqPacket> even_net_packet_queue = {};
 std::deque<netReqPacket> odd_net_packet_queue = {};
 
@@ -64,13 +65,8 @@ void req_create (
     uint64_t req_payload
 );
 void req_reset (DUT_TYPE& dut);
-void net_accept (
-    DUT_TYPE& dut,
-    bool ren,
-    bool wen,
-    uint64_t req_addr,
-    uint64_t req_payload
-);
+void net_req_accept (DUT_TYPE& dut, VerilatedFstC& trace);
+void net_req_comp (DUT_TYPE& dut, std::deque<netReqPacket>& packet_queue);
 void net_reset (DUT_TYPE& dut);
 
 void print_config (TBCfg& config) {
@@ -194,11 +190,21 @@ void req_create (
     std::cout << "       req_ren     : " << req_ren << std::endl;
     std::cout << "       req_wen     : " << req_wen << std::endl;
     std::cout << "       req_addr    : 0x" << std::hex << req_addr << std::dec << std::endl;
-    std::cout << "       req_payload : 0x" << std::hex << req_payload << std::dec << std::endl;
+    std::cout << "       req_payload : 0x" << std::hex << req_payload << std::dec << "\n" << std::endl;
     dut.req_ren = req_ren;
     dut.req_wen = req_wen;
     dut.req_addr = req_addr;
     dut.req_payload = req_payload;
+
+    netReqPacket packet {
+        .wen = req_wen,
+        .id = 0,
+        .addr = req_addr,
+        .payload = req_payload,
+        .payload_comp = 0,
+    };
+
+    requestBufferQueue.push_back(packet);
 }
 
 void req_reset (DUT_TYPE& dut) {
@@ -209,16 +215,86 @@ void req_reset (DUT_TYPE& dut) {
     dut.req_payload = 0;
 }
 
-void net_req_accept (
-    DUT_TYPE& dut
-) {
+void net_req_accept (DUT_TYPE& dut, VerilatedFstC& trace) {
+    // randomly wait at most 10 cycles before accepting
+    for (int i = 0; i < std::rand() % 10; i++) {
+        tick(dut, trace);
+        net_reset(dut);
+    }
 
+    dut.net_stall = 0;
+
+    uint32_t r1 = std::rand();
+    uint32_t r2 = std::rand();
+    netReqPacket packet {
+        .wen = (bool) dut.net_req_wen,
+        .id = dut.net_req_id,
+        .addr = dut.net_req_addr,
+        .payload = dut.net_req_payload,
+        .payload_comp = (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2))
+    };
+
+    std::cout << "[INFO] Network Accepting Request from FIFO Router" << std::endl;
+    std::cout << "       Generating a payload comp for TB..." << std::endl;
+    std::cout << "       net_req_wen     : " << packet.wen << std::endl;
+    std::cout << "       net_req_id      : " << packet.id << std::endl;
+    std::cout << "       net_req_addr    : 0x" << std::hex << packet.addr << std::dec << std::endl;
+    std::cout << "       net_req_payload : 0x" << std::hex << packet.payload << std::dec << std::endl;
+    std::cout << "       payload_comp    : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
+
+    if (packet.id % 2)
+        odd_net_packet_queue.push_back(packet);
+    else
+        even_net_packet_queue.push_back(packet);
+
+    // sanity checks
+    if (packet.wen != requestBufferQueue.front().wen) {
+        std::cout << "requestBufferQueue.front().addr: 0x" << std::hex << requestBufferQueue.front().addr << std::dec << "\n" << std::endl;
+        exit(1);
+    };
+
+    netReqPacket request = requestBufferQueue.front();
+    assert(packet.wen == request.wen);
+    assert(packet.addr == request.addr);
+    assert(packet.payload == request.payload);
+
+    request.payload_comp = packet.payload_comp;
+    commitBufferQueue.push_back(request);
+    requestBufferQueue.pop_front();
 }
 
 void net_req_comp (
-    DUT_TYPE& dut
+    DUT_TYPE& dut,
+    std::deque<netReqPacket>& packet_queue
 ) {
-    
+    // randomly select an index to pop between [1, size)
+    // (or [0] if size == 1)
+    int idx = std::rand() % (packet_queue.size() - 1);
+
+    // ensure we're not popping the first index
+    if (packet_queue.size() > 1) idx++;
+    else idx = 0;
+
+    netReqPacket packet = packet_queue[idx];
+
+    std::cout << "[INFO] Network Completing Request from FIFO Router" << std::endl;
+    std::cout << "       net_req_id_comp : " << packet.id << std::endl;
+    std::cout << "       net_req_payload_comp : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
+
+    dut.net_en_comp = true;
+    dut.net_req_id_comp = packet.id;
+    dut.net_req_payload_comp = packet.payload_comp;
+
+    int i = 0;
+    for (std::deque<netReqPacket>::iterator it = packet_queue.begin(); it != packet_queue.end();) {
+        if (i == idx) {
+            packet_queue.erase(it);
+            break;
+        } else {
+            ++it;
+        }
+        i++;
+    }
 }
 
 void net_reset (DUT_TYPE& dut){
@@ -275,8 +351,8 @@ int main (int argc, char **argv) {
         req_create(dut,
             r1 % 2,
             (r1 + 1) % 2,
-            0x8000 + i * 8,
-            (( (uint64_t)(r1) ) << 32) + ( (uint64_t)(r2) )
+            r1 + r2,
+            (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2))
         );
         tick(dut, trace);
     }
@@ -287,6 +363,56 @@ int main (int argc, char **argv) {
         tick(dut, trace);
         assert(dut.fifo_router_full);
     }
+
+    // take in two requests
+    net_req_accept(dut, trace);
+    tick(dut, trace);
+    net_reset(dut);
+
+    net_req_accept(dut, trace);
+    tick(dut, trace);
+    net_reset(dut);
+
+    assert(even_net_packet_queue.size() == 1);
+    assert(odd_net_packet_queue.size() == 1);
+
+    for (int i = 0; !even_net_packet_queue.empty() || !odd_net_packet_queue.empty(); i++) {
+        assert(!dut.req_comp);
+
+        // once there are 2 packets left to send to the network,
+        // lets start completing some packets out of order
+        if (requestBufferQueue.size() <= 2) {
+            if (i % 2)
+                net_req_comp(dut, even_net_packet_queue);
+            else
+                net_req_comp(dut, odd_net_packet_queue);
+        }
+
+        // begin accepting packets into the network
+        if (requestBufferQueue.size() > 0)
+            net_req_accept(dut, trace);
+
+        tick(dut, trace);
+        net_reset(dut);
+    }
+
+    for (std::deque<netReqPacket>::iterator it = commitBufferQueue.begin(); it != commitBufferQueue.end();) {
+        std::cout << "[INFO] Committing Request from FIFO Router" << std::endl;
+        std::cout << "       req_comp         : " << dut.req_comp << std::endl;
+        std::cout << "       req_addr_comp    : 0x" << std::hex << dut.req_addr_comp << std::dec << std::endl;
+        std::cout << "       req_payload_comp : 0x" << std::hex << dut.req_payload_comp << std::dec << "\n" << std::endl;
+        std::cout << "       req_addr_comp    : 0x" << std::hex << it->addr << std::dec << std::endl;
+        std::cout << "       req_payload_comp : 0x" << std::hex << it->payload_comp << std::dec << "\n" << std::endl;
+
+        assert(dut.req_comp);
+        assert(it->addr == dut.req_addr_comp);
+        assert(it->payload_comp == dut.req_payload_comp);
+        tick(dut, trace);
+        ++it;
+    }
+
+    reset(dut, trace);
+    tick(dut, trace);
 
     // End test bench
     auto tend = std::chrono::high_resolution_clock::now();

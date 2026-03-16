@@ -122,6 +122,12 @@ always_comb begin : entryUpdate
     next_net_pointer = net_pointer;
     next_fifo_router_buffer = fifo_router_buffer;
 
+    net_en = '0;
+    net_req_id = '0;
+    net_req_wen = '0;
+    net_req_addr = '0;
+    net_req_payload = '0;
+
     req_comp = '0;
     req_addr_comp = '0;
     req_payload_comp = '0;
@@ -158,7 +164,7 @@ always_comb begin : entryUpdate
     // Commiting the request back to the requester
     // Requester MUST detect the completed data within a clock cycle
     if (fifo_router_buffer[req_comp_pointer].valid) begin
-        req_comp = 1;
+        req_comp = !fifo_router_empty;
         req_addr_comp = fifo_router_buffer[req_comp_pointer].addr;
         req_payload_comp = fifo_router_buffer[req_comp_pointer].rdata;
         next_req_comp_pointer = updatePointer(req_comp_pointer);
