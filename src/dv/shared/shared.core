@@ -3,6 +3,13 @@ name: tinynocs:src:dv-shared:0.0.1
 description: Shared DV modules for NoC components
 
 filesets:
+  fifo_basic:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - fifo_basic.cc : {file_type: cppSource}
+    file_type: systemVerilogSource
+
   fifo_router:
     depend:
       - tinynocs:src:rtl-shared:0.0.1
@@ -27,6 +34,12 @@ targets:
           - --trace-threads 4
           - --threads 4
           - -CFLAGS "-std=c++23"
+
+  tb_fifo_basic:
+    <<: *default
+    toplevel: fifo_basic
+    filesets_append:
+      - fifo_basic
 
   tb_fifo_router:
     <<: *default

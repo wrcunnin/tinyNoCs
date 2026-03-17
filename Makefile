@@ -1,5 +1,9 @@
 
-.phony: fifo-router clean
+.phony: fifo-basic fifo-router clean
+
+fifo-basic:
+	fusesoc --cores-root . run --build --target tb_fifo_basic tinynocs:src:dv-shared
+	build/tinynocs_src_dv-shared_0.0.1/tb_fifo_basic-verilator/Vfifo_basic --trace-en
 
 fifo-router:
 	fusesoc --cores-root . run --build --target tb_fifo_router tinynocs:src:dv-shared
