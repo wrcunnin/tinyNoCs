@@ -7,14 +7,14 @@ filesets:
     depend:
       - tinynocs:src:rtl-shared:0.0.1
     files:
-      - fifo_basic.cc : {file_type: cppSource}
+      - fifo/fifo_basic.cc : {file_type: cppSource}
     file_type: systemVerilogSource
 
   fifo_router:
     depend:
       - tinynocs:src:rtl-shared:0.0.1
     files:
-      - fifo_router.cc : {file_type: cppSource}
+      - fifo/fifo_router.cc : {file_type: cppSource}
     file_type: systemVerilogSource
 
 targets:
