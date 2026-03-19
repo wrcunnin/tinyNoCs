@@ -4,8 +4,7 @@ Author: William Cunningham
 Date  : 03/16/2026
 
 Description:
-    FIFO with basic capabilit. Endpoints produce/commit requests in-order, but the
-    network can complete requests out of order.
+    FIFO with basic capabilities. Producing and consuming are in order.
 
 */
 
