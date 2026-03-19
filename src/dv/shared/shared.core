@@ -36,12 +36,38 @@ targets:
           - --threads 4
           - -CFLAGS "-std=c++23"
 
+  ###################################
+  # FIFO Basic Test Benches
+  ###################################
   tb_fifo_basic:
     <<: *default
     toplevel: fifo_basic
     filesets_append:
       - fifo_basic
 
+  tb_fifo_basic_10:
+    <<: *default
+    toplevel: fifo_basic
+    filesets_append:
+      - fifo_basic
+    tools:
+      verilator:
+        verilator_options_append:
+          - -GDEPTH=10
+
+  tb_fifo_basic_64:
+    <<: *default
+    toplevel: fifo_basic
+    filesets_append:
+      - fifo_basic
+    tools:
+      verilator:
+        verilator_options_append:
+          - -GDEPTH=64
+
+  ###################################
+  # FIFO Router Test Benches
+  ###################################
   tb_fifo_router:
     <<: *default
     toplevel: fifo_router

@@ -5,6 +5,20 @@
 fifo-basic:
 	fusesoc --cores-root . run --build --target tb_fifo_basic tinynocs:src:dv-shared
 	build/tinynocs_src_dv-shared_0.0.1/tb_fifo_basic-verilator/Vfifo_basic --trace-en
+	@echo "Built and ran Basic FIFO with its default depth\n"
+
+fifo-basic-10:
+	fusesoc --cores-root . run --build --target tb_fifo_basic_10 tinynocs:src:dv-shared
+	build/tinynocs_src_dv-shared_0.0.1/tb_fifo_basic_10-verilator/Vfifo_basic --trace-en
+	@echo "Built and ran Basic FIFO with a depth of 10 entries\n"
+
+fifo-basic-64:
+	fusesoc --cores-root . run --build --target tb_fifo_basic_64 tinynocs:src:dv-shared
+	build/tinynocs_src_dv-shared_0.0.1/tb_fifo_basic_64-verilator/Vfifo_basic --trace-en
+	@echo "Built and ran Basic FIFO with a depth of 64 entries\n"
+
+fifo-basic-all: fifo-basic fifo-basic-10 fifo-basic-64
+	@echo "Built and ran all Basic FIFO test benches\n"
 
 
 ###################################
