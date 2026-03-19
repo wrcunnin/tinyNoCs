@@ -28,8 +28,11 @@ module fifo_router #(
     // Payload for a request when writing
     input logic [PAYLOAD_BITS-1:0] req_payload,
 
-    // Indicate an entry is ready to commit (assume requester takes 1 cycle)
+    // Indicate an entry is ready to commit
     output logic req_comp,
+
+    // Indicates if a requester requires the completion to stall
+    input logic req_comp_stall,
 
     // Address of the completed request
     output logic [ADDRESS_BITS-1:0] req_addr_comp,
@@ -166,7 +169,7 @@ always_comb begin : entryUpdate
         req_addr_comp = fifo_router_buffer[req_comp_pointer].addr;
         req_payload_comp = fifo_router_buffer[req_comp_pointer].rdata;
 
-        next_req_comp_pointer = updatePointer(req_comp_pointer);
+        if (!req_comp_stall) next_req_comp_pointer = updatePointer(req_comp_pointer);
     end
 end
 
@@ -178,7 +181,7 @@ always_comb begin : controlFullEmpty
         // FIFO will be full if:
         // - requester makes a request
         // - request is not completed
-        if (req_en && !req_comp) begin
+        if (req_en && !(req_comp && !req_comp_stall)) begin
             next_fifo_router_full = 1;
             next_fifo_router_empty = 0;
         end
@@ -186,7 +189,7 @@ always_comb begin : controlFullEmpty
         // FIFO will be empty if:
         // - requester does not make a request
         // - request is completed
-        else if (!req_en && req_comp) begin
+        else if (!req_en && (req_comp && !req_comp_stall)) begin
             next_fifo_router_full = 0;
             next_fifo_router_empty = 1;
         end
@@ -195,7 +198,7 @@ always_comb begin : controlFullEmpty
         // was not a request created nor completed.
         else begin
             assert(!req_en);
-            assert(!req_comp);
+            assert(!(req_comp && !req_comp_stall));
         end
     end else begin
         if (req_en)

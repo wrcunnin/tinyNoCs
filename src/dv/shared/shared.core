@@ -24,6 +24,7 @@ targets:
       verilator:
         verilator_options:
           - --assert
+          - -Wno-WIDTHCONCAT
           - -Wno-SYMRSVDWORD
           - -Wno-ENUMVALUE
           - -Wno-TIMESCALEMOD
@@ -46,3 +47,24 @@ targets:
     toplevel: fifo_router
     filesets_append:
       - fifo_router
+
+  tb_fifo_router_10:
+    <<: *default
+    toplevel: fifo_router
+    filesets_append:
+      - fifo_router
+    tools:
+      verilator:
+        verilator_options_append:
+          - -GDEPTH=10
+
+  tb_fifo_router_64:
+    <<: *default
+    toplevel: fifo_router
+    filesets_append:
+      - fifo_router
+    tools:
+      verilator:
+        verilator_options_append:
+          - -GDEPTH=64
+
