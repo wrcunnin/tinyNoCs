@@ -212,7 +212,7 @@ void net_reset (DUT_TYPE& dut){
     dut.net_stall = 1;
 
     // from network
-    dut.net_en_comp = 0;
+    dut.net_comp = 0;
     SET_PACKET_WEN(dut.net_comp_packet, 0);
     SET_PACKET_ID(dut.net_comp_packet, 0);
     SET_PACKET_ADDR(dut.net_comp_packet, 0);
@@ -316,7 +316,7 @@ void net_req_comp (
     std::cout << "       net_comp_packet.id      : " << packet.id << std::endl;
     std::cout << "       net_comp_packet.payload : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
 
-    dut.net_en_comp = true;
+    dut.net_comp = true;
     SET_PACKET_ID(dut.net_comp_packet, packet.id);
     SET_PACKET_PAYLOAD(dut.net_comp_packet, packet.payload_comp);
 

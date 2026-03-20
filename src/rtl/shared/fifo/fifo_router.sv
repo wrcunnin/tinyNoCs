@@ -54,7 +54,7 @@ module fifo_router #(
     ////////////////////////////////////////////////////////
     // Network receiving data
     // Indicates a request is complete and can commit in the buffer
-    input logic net_en_comp,
+    input logic net_comp,
 
     // Information received from the network to put back in the FIFO
     input packet_t net_comp_packet
@@ -129,7 +129,7 @@ always_comb begin : entryUpdate
     end
 
     // Updating the buffer from the network
-    if (net_en_comp) begin
+    if (net_comp) begin
         // TODO: is it okay not to check for !wen here? putting assertion here for sanity
         assert(!net_comp_packet.wen || fifo_router_buffer[net_comp_packet.id].packet.payload == net_comp_packet.payload)
         next_fifo_router_buffer[net_comp_packet.id].packet.payload = net_comp_packet.payload;
