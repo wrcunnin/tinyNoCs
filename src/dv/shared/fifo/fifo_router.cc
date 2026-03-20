@@ -19,6 +19,21 @@
 #define TRACE_NAME "waveform.fst"
 #define DUT_TYPE Vfifo_router
 
+#define GET_PACKET_WEN(packet) (packet[4UL] & 0x1)
+#define GET_PACKET_ID(packet) (packet[3UL])
+#define GET_PACKET_ADDR(packet) (packet[2UL])
+#define GET_PACKET_PAYLOAD(packet) \
+    (((uint64_t)((uint64_t)(packet[1UL])) << 32UL) | ((uint64_t)(packet[0UL])))
+#define SET_PACKET_WEN(packet, wen) \
+    packet[4UL] = (wen & 0x1);
+#define SET_PACKET_ID(packet, id) \
+    packet[3UL] = id;
+#define SET_PACKET_ADDR(packet, addr) \
+    packet[2UL] = addr;
+#define SET_PACKET_PAYLOAD(packet, payload) \
+    packet[1UL] = (((uint64_t) payload) >> 32) & 0xFFFFFFFF; \
+    packet[0UL] = (((uint64_t) payload)) & 0xFFFFFFFF;
+
 struct TBCfg {
     bool trace_en;
     unsigned long cycle_limit;
@@ -28,8 +43,8 @@ struct TBCfg {
 
 struct netReqPacket {
     bool wen;
-    uint64_t id;
-    uint64_t addr;
+    uint32_t id;
+    uint32_t addr;
     uint64_t payload;
     uint64_t payload_comp;
 };
@@ -63,8 +78,8 @@ void req_create (
     DUT_TYPE& dut,
     bool ren,
     bool wen,
-    uint64_t req_addr,
-    uint64_t req_payload
+    uint64_t addr,
+    uint64_t payload
 );
 void net_req_accept (DUT_TYPE& dut, VerilatedFstC& trace);
 void net_req_comp (DUT_TYPE& dut, std::deque<netReqPacket>& packet_queue);
@@ -182,10 +197,11 @@ void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
 
 void req_reset (DUT_TYPE& dut) {
     // into FIFO buffer
-    dut.req_ren = 0;
-    dut.req_wen = 0;
-    dut.req_addr = 0;
-    dut.req_payload = 0;
+    dut.req_en = 0;
+    SET_PACKET_WEN(dut.req_packet, 0);
+    SET_PACKET_ID(dut.req_packet, 0);
+    SET_PACKET_ADDR(dut.req_packet, 0);
+    SET_PACKET_PAYLOAD(dut.req_packet, 0);
 
     // for committing requests to FIFO
     dut.req_comp_stall = 1;
@@ -193,36 +209,41 @@ void req_reset (DUT_TYPE& dut) {
 
 void net_reset (DUT_TYPE& dut){
     // to network
-    dut.net_en_comp = 0;
-    dut.net_req_payload_comp = 0;
-    dut.net_req_id_comp = 0;
+    dut.net_stall = 1;
 
     // from network
-    dut.net_stall = 1;
+    dut.net_en_comp = 0;
+    SET_PACKET_WEN(dut.net_comp_packet, 0);
+    SET_PACKET_ID(dut.net_comp_packet, 0);
+    SET_PACKET_ADDR(dut.net_comp_packet, 0);
+    SET_PACKET_PAYLOAD(dut.net_comp_packet, 0);
 }
 
 void req_create (
     DUT_TYPE& dut,
-    bool req_ren,
-    bool req_wen,
-    uint64_t req_addr,
-    uint64_t req_payload
+    bool ren,
+    bool wen,
+    uint64_t addr,
+    uint64_t payload
 ) {
     std::cout << "[INFO] Creating Request to FIFO Router" << std::endl;
-    std::cout << "       req_ren     : " << req_ren << std::endl;
-    std::cout << "       req_wen     : " << req_wen << std::endl;
-    std::cout << "       req_addr    : 0x" << std::hex << req_addr << std::dec << std::endl;
-    std::cout << "       req_payload : 0x" << std::hex << req_payload << std::dec << "\n" << std::endl;
-    dut.req_ren = req_ren;
-    dut.req_wen = req_wen;
-    dut.req_addr = req_addr;
-    dut.req_payload = req_payload;
+    std::cout << "       req_en             : " << (ren || wen) << std::endl;
+    std::cout << "       req_packet.wen     : " << wen << std::endl;
+    std::cout << "       req_packet.addr    : 0x" << std::hex << addr << std::dec << std::endl;
+    std::cout << "       req_packet.payload : 0x" << std::hex << payload << std::dec << "\n" << std::endl;
+
+    // PACKET_T new_packet;
+    dut.req_en = ren || wen;
+    SET_PACKET_WEN(dut.req_packet, wen);
+    SET_PACKET_ID(dut.req_packet, 0);
+    SET_PACKET_ADDR(dut.req_packet, addr);
+    SET_PACKET_PAYLOAD(dut.req_packet, payload);
 
     netReqPacket packet {
-        .wen = req_wen,
+        .wen = wen,
         .id = 0,
-        .addr = req_addr,
-        .payload = req_payload,
+        .addr = addr,
+        .payload = payload,
         .payload_comp = 0,
     };
 
@@ -241,20 +262,20 @@ void net_req_accept (DUT_TYPE& dut, VerilatedFstC& trace) {
     uint32_t r1 = std::rand();
     uint32_t r2 = std::rand();
     netReqPacket packet {
-        .wen = (bool) dut.net_req_wen,
-        .id = dut.net_req_id,
-        .addr = dut.net_req_addr,
-        .payload = dut.net_req_payload,
+        .wen = (bool) GET_PACKET_WEN(dut.net_req_packet),
+        .id = GET_PACKET_ID(dut.net_req_packet),
+        .addr = GET_PACKET_ADDR(dut.net_req_packet),
+        .payload = GET_PACKET_PAYLOAD(dut.net_req_packet),
         .payload_comp = (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2))
     };
 
     std::cout << "[INFO] Network Accepting Request from FIFO Router" << std::endl;
     std::cout << "       Generating a payload comp for TB..." << std::endl;
-    std::cout << "       net_req_wen     : " << packet.wen << std::endl;
-    std::cout << "       net_req_id      : " << packet.id << std::endl;
-    std::cout << "       net_req_addr    : 0x" << std::hex << packet.addr << std::dec << std::endl;
-    std::cout << "       net_req_payload : 0x" << std::hex << packet.payload << std::dec << std::endl;
-    std::cout << "       payload_comp    : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
+    std::cout << "       packet.wen     : " << packet.wen << std::endl;
+    std::cout << "       packet.id      : " << packet.id << std::endl;
+    std::cout << "       packet.addr    : 0x" << std::hex << packet.addr << std::dec << std::endl;
+    std::cout << "       packet.payload : 0x" << std::hex << packet.payload << std::dec << std::endl;
+    std::cout << "       return payload : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
 
     if (packet.id % 2)
         odd_net_packet_queue.push_back(packet);
@@ -292,12 +313,12 @@ void net_req_comp (
     netReqPacket packet = packet_queue[idx];
 
     std::cout << "[INFO] Network Completing Request from FIFO Router" << std::endl;
-    std::cout << "       net_req_id_comp : " << packet.id << std::endl;
-    std::cout << "       net_req_payload_comp : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
+    std::cout << "       net_comp_packet.id      : " << packet.id << std::endl;
+    std::cout << "       net_comp_packet.payload : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
 
     dut.net_en_comp = true;
-    dut.net_req_id_comp = packet.id;
-    dut.net_req_payload_comp = packet.payload_comp;
+    SET_PACKET_ID(dut.net_comp_packet, packet.id);
+    SET_PACKET_PAYLOAD(dut.net_comp_packet, packet.payload_comp);
 
     int i = 0;
     for (std::deque<netReqPacket>::iterator it = packet_queue.begin(); it != packet_queue.end();) {
@@ -319,17 +340,19 @@ void req_complete (DUT_TYPE& dut, VerilatedFstC& trace, netReqPacket packet) {
     }
 
     dut.req_comp_stall = 0;
+    uint32_t comp_addr = GET_PACKET_ADDR(dut.req_comp_packet);
+    uint64_t comp_payload = GET_PACKET_PAYLOAD(dut.req_comp_packet);
 
     std::cout << "[INFO] Committing Request from FIFO Router" << std::endl;
     std::cout << "       req_comp         : " << (bool) dut.req_comp << std::endl;
-    std::cout << "       req_addr_comp    : 0x" << std::hex << dut.req_addr_comp << std::dec << std::endl;
+    std::cout << "       req_addr_comp    : 0x" << std::hex << comp_addr << std::dec << std::endl;
     std::cout << "       expected addr    : 0x" << std::hex << packet.addr << std::dec << std::endl;
-    std::cout << "       req_payload_comp : 0x" << std::hex << dut.req_payload_comp << std::dec << std::endl;
+    std::cout << "       req_payload_comp : 0x" << std::hex << comp_payload << std::dec << std::endl;
     std::cout << "       expected payload : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
 
     assert((bool) dut.req_comp);
-    assert(packet.addr == dut.req_addr_comp);
-    assert(packet.payload_comp == dut.req_payload_comp);
+    assert(packet.addr == comp_addr);
+    assert(packet.payload_comp == comp_payload);
     tick(dut, trace);
 }
 

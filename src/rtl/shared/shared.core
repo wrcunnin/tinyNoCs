@@ -3,6 +3,11 @@ name: tinynocs:src:rtl-shared:0.0.1
 description: Shared RTL modules for NoC components
 
 filesets:
+  packages:
+    files:
+      - packages/packet_pkg.sv
+    file_type: systemVerilogSource
+
   fifo_basic:
     files:
       - fifo/fifo_basic.sv
@@ -16,5 +21,6 @@ filesets:
 targets:
   default: &default
     filesets:
+      - packages
       - fifo_basic
       - fifo_router
