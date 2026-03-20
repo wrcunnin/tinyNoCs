@@ -262,10 +262,10 @@ void net_req_accept (DUT_TYPE& dut, VerilatedFstC& trace) {
     uint32_t r1 = std::rand();
     uint32_t r2 = std::rand();
     netReqPacket packet {
-        .wen = (bool) GET_PACKET_WEN(dut.net_req_packet),
-        .id = GET_PACKET_ID(dut.net_req_packet),
-        .addr = GET_PACKET_ADDR(dut.net_req_packet),
-        .payload = GET_PACKET_PAYLOAD(dut.net_req_packet),
+        .wen = (bool) GET_PACKET_WEN(dut.net_packet),
+        .id = GET_PACKET_ID(dut.net_packet),
+        .addr = GET_PACKET_ADDR(dut.net_packet),
+        .payload = GET_PACKET_PAYLOAD(dut.net_packet),
         .payload_comp = (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2))
     };
 

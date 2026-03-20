@@ -49,7 +49,7 @@ module fifo_router #(
     input logic net_stall,
 
     // Information to send out to the network from the FIFO
-    output packet_t net_req_packet,
+    output packet_t net_packet,
 
     ////////////////////////////////////////////////////////
     // Network receiving data
@@ -105,7 +105,7 @@ always_comb begin : entryUpdate
     next_fifo_router_buffer = fifo_router_buffer;
 
     net_en = '0;
-    net_req_packet = '0;
+    net_packet = '0;
 
     req_comp = 0;
     req_comp_packet = '0;
@@ -121,8 +121,8 @@ always_comb begin : entryUpdate
     // Issuing to the network
     if (!fifo_router_empty) begin
         net_en = 1;
-        net_req_packet = fifo_router_buffer[net_pointer].packet;
-        net_req_packet.id = net_pointer;
+        net_packet = fifo_router_buffer[net_pointer].packet;
+        net_packet.id = net_pointer;
 
         // Only update the pointer when the network is not stalled
         if (!net_stall) next_net_pointer = updatePointer(net_pointer);
