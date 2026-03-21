@@ -34,6 +34,32 @@
     packet[1UL] = (((uint64_t) payload) >> 32) & 0xFFFFFFFF; \
     packet[0UL] = (((uint64_t) payload)) & 0xFFFFFFFF;
 
+
+#define GET_NET_PACKET_REQUEST(packet) \
+    ( (packet[5UL] >> 1) & 0x1 )
+#define GET_NET_PACKET_START_ADDR(packet) \
+    ( (packet[5UL] << 31) | ((packet[4UL] & ~0x1) >> 1) )
+#define GET_NET_PACKET_WEN(packet) (packet[4UL] & 0x1)
+#define GET_NET_PACKET_ID(packet) (packet[3UL])
+#define GET_NET_PACKET_ADDR(packet) (packet[2UL])
+#define GET_NET_PACKET_PAYLOAD(packet) \
+    (((uint64_t)((uint64_t)(packet[1UL])) << 32UL) | ((uint64_t)(packet[0UL])))
+
+#define SET_NET_PACKET_REQUEST(packet, request) \
+    packet[5UL] = ((request & 0x1) << 1) | (packet[5UL] & 0xFFFFFFFD);
+#define SET_NET_PACKET_START_ADDR(packet, start_addr) \
+    packet[5UL] = (packet[5UL] & 0xFFFFFFFE) | (start_addr >> 31); \
+    packet[4UL] = (start_addr << 1) | (packet[4UL] & 0x1);
+#define SET_NET_PACKET_WEN(packet, wen) \
+    packet[4UL] = (packet[4UL] & ~0x1) | (wen & 0x1);
+#define SET_NET_PACKET_ID(packet) \
+    packet[3UL] = id;
+#define SET_NET_PACKET_ADDR(packet) \
+    packet[2UL] = addr;
+#define SET_NET_PACKET_PAYLOAD(packet) \
+    packet[1UL] = (((uint64_t) payload) >> 32) & 0xFFFFFFFF; \
+    packet[0UL] = (((uint64_t) payload)) & 0xFFFFFFFF;
+
 struct TBCfg {
     bool trace_en;
     unsigned long cycle_limit;
@@ -456,9 +482,9 @@ int main (int argc, char **argv) {
     // End test bench
     auto tend = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart);
-    std::cout   << "Simulated " << sim_time 
+    std::cout   << "Simulated " << cycles 
                 << " cycles in " << ms.count() << "ms" 
-                << ", rate of " << (float)sim_time / ((float)ms.count() / 1000.0) 
+                << ", rate of " << (float)cycles / ((float)ms.count() / 1000.0) 
                 << " cycles per second." << std::endl;
 
     if(config.trace_en)

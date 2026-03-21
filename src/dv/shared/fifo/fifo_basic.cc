@@ -263,9 +263,9 @@ int main (int argc, char **argv) {
     // End test bench
     auto tend = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart);
-    std::cout   << "Simulated " << sim_time 
+    std::cout   << "Simulated " << cycles 
                 << " cycles in " << ms.count() << "ms" 
-                << ", rate of " << (float)sim_time / ((float)ms.count() / 1000.0) 
+                << ", rate of " << (float)cycles / ((float)ms.count() / 1000.0) 
                 << " cycles per second." << std::endl;
 
     if(config.trace_en)
