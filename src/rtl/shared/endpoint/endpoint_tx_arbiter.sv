@@ -18,7 +18,7 @@ module endpoint_tx_arbiter #(
     ////////////////////////////////////////////////////////
     // Requester sending data
     // Stalls the requesting FIFO
-    output logic req_stall
+    output logic req_stall,
 
     // Requester wants to send a packet
     input logic req_en,
@@ -82,7 +82,7 @@ always_comb begin : packetSelection
     end
 
     // If the responder is wanting to send & requester has nothing to send
-    else if (!rep_en && resp_en) begin
+    else if (!req_en && resp_en) begin
         selected = EPTXARB_RESP;
         next_lru = EPTXARB_REQ;
     end

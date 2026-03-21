@@ -3,6 +3,13 @@ name: tinynocs:src:dv-shared:0.0.1
 description: Shared DV modules for NoC components
 
 filesets:
+  endpoint:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - endpoint/endpoint.cc : {file_type: cppSource}
+    file_type: systemVerilogSource
+
   fifo_basic:
     depend:
       - tinynocs:src:rtl-shared:0.0.1
@@ -35,6 +42,21 @@ targets:
           - --trace-threads 4
           - --threads 4
           - -CFLAGS "-std=c++23"
+
+  ###################################
+  # Endpoint Test Benches
+  ###################################
+  tb_endpoint:
+    <<: *default
+    toplevel: endpoint
+    filesets_append:
+      - endpoint
+    tools:
+      verilator:
+        verilator_options_append:
+          - -GTX_BUFFER_DEPTH=8
+          - -GRX_BUFFER_DEPTH=8
+          - -GENDPOINT_ADDR=2147487744
 
   ###################################
   # FIFO Basic Test Benches

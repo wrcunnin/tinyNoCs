@@ -22,15 +22,16 @@ import packet_pkg::*;
 
 module endpoint #(
     parameter int TX_BUFFER_DEPTH,
-    parameter int RX_BUFFER_DEPTH
+    parameter int RX_BUFFER_DEPTH,
+    parameter int ENDPOINT_ADDR
 ) (
     // Clock, async reset
     input logic CLK, nRST,
 
     ////////////////////////////////////////////////////////
     // Requester sending data
-    // Stalls the requesting FIFO
-    output logic req_stall,
+    // Lets requester know if TX FIFO is full/empty
+    output logic req_full, req_empty,
 
     // Requester wants to send a packet
     input logic req_en,
@@ -220,7 +221,9 @@ logic        tx_arbiter_net_en;
 logic        tx_arbiter_net_stall;
 net_packet_t tx_arbiter_net_packet;
 
-endpoint_tx_arbiter tx_arbiter (
+endpoint_tx_arbiter #(
+    .ENDPOINT_ADDR(ENDPOINT_ADDR)
+) tx_arbiter (
     .CLK(CLK),
     .nRST(nRST),
     .req_stall(tx_arbiter_req_stall),
@@ -239,7 +242,8 @@ endpoint_tx_arbiter tx_arbiter (
 /************************************************/
 /* assigns                                      */
 /************************************************/
-assign req_stall = endpoint_tx_buffer_fifo_router_full;
+assign req_full = endpoint_tx_buffer_fifo_router_full;
+assign req_empty = endpoint_tx_buffer_fifo_router_empty;
 assign endpoint_tx_buffer_req_en = req_en;
 assign endpoint_tx_buffer_req_packet = req_packet;
 assign endpoint_tx_buffer_req_comp_stall = req_comp_stall;
@@ -274,7 +278,9 @@ assign net_en_tx = tx_arbiter_net_en;
 assign net_packet_tx = tx_arbiter_net_packet;
 
 // Sanity checks
-assert (return_addr_buffer_full == endpoint_rx_buffer_fifo_router_full);
-assert (return_addr_buffer_empty == endpoint_rx_buffer_fifo_router_empty);
+always_comb begin
+    assert(return_addr_buffer_full == endpoint_rx_buffer_fifo_router_full);
+    assert(return_addr_buffer_empty == endpoint_rx_buffer_fifo_router_empty);
+end
 
 endmodule

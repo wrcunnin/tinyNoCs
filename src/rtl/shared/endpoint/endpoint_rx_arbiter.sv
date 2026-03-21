@@ -61,7 +61,7 @@ always_comb begin : packetSelection
     if (net_en) begin
         // If a packet is a request, it goes to the response FIFO
         // - We are receiving data we requested/acknowledged
-        if (packet.request) begin
+        if (net_packet.request) begin
             resp_en = 1;
             resp_packet = net_packet.packet;
             resp_return_addr = net_packet.start_addr;
@@ -69,7 +69,7 @@ always_comb begin : packetSelection
         end
         // If a packet is not a request, it goes to the request FIFO
         // - We are receiving data we requested/acknowledged
-        else if (!packet.request) begin
+        else if (!net_packet.request) begin
             req_en = 1;
             req_packet = net_packet.packet;
             req_return_addr = net_packet.start_addr;

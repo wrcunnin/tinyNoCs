@@ -1,5 +1,13 @@
 
 ###################################
+# Endpoint Test Benches
+###################################
+endpoint:
+	fusesoc --cores-root . run --build --target tb_endpoint tinynocs:src:dv-shared
+	build/tinynocs_src_dv-shared_0.0.1/tb_endpoint-verilator/Vendpoint --trace-en
+	@echo "Built and ran an endpoint with basic params\n"
+
+###################################
 # FIFO Basic Test Benches
 ###################################
 fifo-basic:

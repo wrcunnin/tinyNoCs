@@ -48,7 +48,7 @@ typedef struct packed {
     logic request;
 
     // Address of the router where packet originated from
-    logic start_addr;
+    addr_t start_addr;
 
     // Packet data/information
     packet_t packet;

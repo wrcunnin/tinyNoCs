@@ -8,6 +8,13 @@ filesets:
       - packages/packet_pkg.sv
     file_type: systemVerilogSource
 
+  endpoint:
+    files:
+      - endpoint/endpoint_rx_arbiter.sv
+      - endpoint/endpoint_tx_arbiter.sv
+      - endpoint/endpoint.sv
+    file_type: systemVerilogSource
+
   fifo_basic:
     files:
       - fifo/fifo_basic.sv
@@ -22,5 +29,6 @@ targets:
   default: &default
     filesets:
       - packages
+      - endpoint
       - fifo_basic
       - fifo_router
