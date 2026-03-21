@@ -42,10 +42,22 @@ module endpoint #(
     // Indicates if a requester requires the completion to stall
     input logic req_comp_stall,
 
+    // Indicates a request is ready to be completed
+    output logic req_comp_en,
+
+    // Packet information returned back to requester
+    output packet_t req_comp_packet,
+
     ////////////////////////////////////////////////////////
     // Responder sending data
     // Stalls the responding FIFO
     input logic resp_stall,
+
+    // Initiates the responder to begin servicing this request
+    output logic resp_en,
+
+    // Packet going out to the responder
+    output packet_t resp_packet,
 
     // Responder wants to send a packet
     input logic resp_comp_en,
@@ -59,10 +71,10 @@ module endpoint #(
     ////////////////////////////////////////////////////////
     // To Network signals
     // Stalls requests/responses to network
-    input net_stall_tx,
+    input logic net_stall_tx,
 
     // Indicates we are sending a packet into the network
-    output net_en_tx,
+    output logic net_en_tx,
 
     // Packaged packet to send out to network
     output net_packet_t net_packet_tx,
@@ -70,10 +82,10 @@ module endpoint #(
     ////////////////////////////////////////////////////////
     // From Network signals
     // Stalls packets from network
-    output net_stall_rx,
+    output logic net_stall_rx,
 
     // Indicates we are sending a packet into the network
-    input net_en_rx,
+    input logic net_en_rx,
 
     // Packaged packet to send out to network
     input net_packet_t net_packet_rx
@@ -250,6 +262,8 @@ assign endpoint_tx_buffer_req_comp_stall = req_comp_stall;
 assign endpoint_tx_buffer_net_stall = tx_arbiter_req_stall;
 assign endpoint_tx_buffer_net_comp = rx_arbiter_req_en;
 assign endpoint_tx_buffer_net_comp_packet = rx_arbiter_req_packet;
+assign req_comp_en = endpoint_tx_buffer_req_comp;
+assign req_comp_packet = endpoint_tx_buffer_req_comp_packet;
 
 assign endpoint_rx_buffer_req_en = rx_arbiter_resp_en;
 assign endpoint_rx_buffer_req_packet = rx_arbiter_resp_packet;
@@ -257,6 +271,8 @@ assign endpoint_rx_buffer_req_comp_stall = tx_arbiter_resp_stall;
 assign endpoint_rx_buffer_net_stall = resp_stall;
 assign endpoint_rx_buffer_net_comp = resp_comp_en;
 assign endpoint_rx_buffer_net_comp_packet = resp_comp_packet;
+assign resp_en = endpoint_rx_buffer_net_en;
+assign resp_packet = endpoint_rx_buffer_net_packet;
 
 assign return_addr_buffer_ren = tx_arbiter_resp_en && !tx_arbiter_resp_stall;
 assign return_addr_buffer_wen = rx_arbiter_resp_en && !rx_arbiter_resp_stall;
