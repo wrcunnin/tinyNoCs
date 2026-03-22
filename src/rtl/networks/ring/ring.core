@@ -1,0 +1,26 @@
+CAPI=2:
+name: tinynocs:src:rtl-ring:0.0.1
+description: RTL modules for Ring Networks
+
+filesets:
+  ring_xbar:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - ring_xbar.sv
+      - ring_xbar_arbiter.sv
+    file_type: systemVerilogSource
+
+  ring_2:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - ring_2.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+      - ring_xbar
+      - ring_2
+

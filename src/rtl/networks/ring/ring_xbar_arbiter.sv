@@ -12,6 +12,9 @@ module ring_xbar_arbiter #(
     parameter int unsigned ENDPOINT_ADDR_START,
     parameter int unsigned ENDPOINT_ADDR_STOP
 ) (
+    // Clock, async reset
+    input logic CLK, nRST,
+
     ////////////////////////////////////////////////////////
     // From Ring Crossbar
     // Stall the incoming network packet
@@ -88,19 +91,19 @@ always_comb begin : packetSelection
         // If both want to send
         if (endpoint_en_rx && net_en_rx) begin
             selected = lru;
-            next_lru = lru == EPTXARB_REQ ? EPTXARB_RESP : EPTXARB_REQ;
+            next_lru = lru == RXBAR_EP ? RXBAR_NET : RXBAR_EP;
         end
 
         // If the requester is wanting to send & responder has nothing to send
         else if (endpoint_en_rx && !net_en_rx) begin
-            selected = EPTXARB_REQ;
-            next_lru = EPTXARB_RESP;
+            selected = RXBAR_EP;
+            next_lru = RXBAR_NET;
         end
 
         // If the responder is wanting to send & requester has nothing to send
         else if (!endpoint_en_rx && net_en_rx) begin
-            selected = EPTXARB_RESP;
-            next_lru = EPTXARB_REQ;
+            selected = RXBAR_NET;
+            next_lru = RXBAR_EP;
         end
     end
 end

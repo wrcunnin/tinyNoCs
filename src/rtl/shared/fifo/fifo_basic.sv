@@ -63,11 +63,11 @@ always_comb begin : entryUpdate
     next_buffer = buffer;
     next_rptr = rptr;
     next_wptr = wptr;
-    rdata = 0;
+    rdata = buffer[rptr];
 
     // read the data from the buffer & update rptr
     if (ren && !empty) begin
-        rdata = buffer[rptr];
+        // rdata = buffer[rptr];
         next_rptr = updatePointer(rptr);
     end
 

@@ -1,4 +1,13 @@
 
+
+###################################
+# Ring Test Benches
+###################################
+ring-2:
+	fusesoc --cores-root . run --build --target tb_ring_2 tinynocs:src:dv-ring
+	build/tinynocs_src_dv-ring_0.0.1/tb_ring_2-verilator/Vring_2 --trace-en
+	@echo "Built and ran a 2-endpoint ring network with basic params\n"
+
 ###################################
 # Endpoint Test Benches
 ###################################

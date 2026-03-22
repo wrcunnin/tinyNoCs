@@ -160,6 +160,8 @@ ring_xbar_arbiter #(
     .ENDPOINT_ADDR_START(ENDPOINT_ADDR_START),
     .ENDPOINT_ADDR_STOP(ENDPOINT_ADDR_STOP)
 ) xbarb (
+    .CLK(CLK),
+    .nRST(nRST),
     .net_stall_rx(xbarb_net_stall_rx),
     .net_en_rx(xbarb_net_en_rx),
     .net_packet_rx(xbarb_net_packet_rx),
