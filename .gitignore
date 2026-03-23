@@ -3,3 +3,6 @@ build/**
 
 # waveforms
 **.fst
+
+# vscode junk
+.vscode/**

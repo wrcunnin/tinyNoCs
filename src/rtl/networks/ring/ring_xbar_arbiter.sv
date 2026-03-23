@@ -75,14 +75,14 @@ end
 
 // Determines if the incoming network packet is intended for the endpoint
 logic net_dest_match;
-assign net_dest_match = (ENDPOINT_ADDR_START <= net_packet_rx.packet.addr) && (net_packet_rx.packet.addr <= ENDPOINT_ADDR_STOP);
+assign net_dest_match = net_en_rx && (ENDPOINT_ADDR_START <= net_packet_rx.packet.addr) && (net_packet_rx.packet.addr <= ENDPOINT_ADDR_STOP);
 
 always_comb begin : packetSelection
     selected = RXBAR_NONE;
     next_lru = lru;
 
     // Network has data for endpoint
-    if (net_dest_match && net_en_rx) begin
+    if (net_dest_match) begin
         selected = RXBAR_EP;
         next_lru = RXBAR_NET;
     end
@@ -121,7 +121,7 @@ always_comb begin : packetRouting
         net_en_tx = endpoint_en_rx;
         net_packet_tx = endpoint_packet_rx;
         endpoint_stall_rx = net_stall_tx;
-        endpoint_en_tx = 1;
+        endpoint_en_tx = net_en_rx;
         endpoint_packet_tx = net_packet_rx;
         net_stall_rx = endpoint_stall_tx;
     end

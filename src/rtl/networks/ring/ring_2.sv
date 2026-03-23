@@ -18,6 +18,8 @@ packet_t     endpoint_``id``_req_packet; \
 logic        endpoint_``id``_req_comp_stall; \
 logic        endpoint_``id``_req_comp_en; \
 packet_t     endpoint_``id``_req_comp_packet; \
+logic        endpoint_``id``_resp_full; \
+logic        endpoint_``id``_resp_empty; \
 logic        endpoint_``id``_resp_stall; \
 logic        endpoint_``id``_resp_en; \
 packet_t     endpoint_``id``_resp_packet; \
@@ -44,6 +46,8 @@ endpoint #( \
     .req_comp_stall(endpoint_``id``_req_comp_stall), \
     .req_comp_en(endpoint_``id``_req_comp_en), \
     .req_comp_packet(endpoint_``id``_req_comp_packet), \
+    .resp_full(endpoint_``id``_resp_full), \
+    .resp_empty(endpoint_``id``_resp_empty), \
     .resp_stall(endpoint_``id``_resp_stall), \
     .resp_en(endpoint_``id``_resp_en), \
     .resp_packet(endpoint_``id``_resp_packet), \
@@ -98,6 +102,8 @@ assign req_full[id] = endpoint_``id``_req_full; \
 assign req_empty[id] = endpoint_``id``_req_empty; \
 assign req_comp_en[id] = endpoint_``id``_req_comp_en; \
 assign req_comp_packet[id] = endpoint_``id``_req_comp_packet; \
+assign resp_full[id] = endpoint_``id``_resp_full; \
+assign resp_empty[id] = endpoint_``id``_resp_empty; \
 assign resp_packet[id] = endpoint_``id``_resp_packet; \
 assign resp_en[id] = endpoint_``id``_resp_en; \
 assign endpoint_``id``_req_en = req_en[id]; \
@@ -146,6 +152,9 @@ module ring_2 #(
 
     ////////////////////////////////////////////////////////
     // Responder sending data
+    // Lets responder know if RX FIFO is full/empty
+    output logic [1:0] resp_full, resp_empty,
+
     // Stalls the responding FIFO
     input logic [1:0] resp_stall,
 

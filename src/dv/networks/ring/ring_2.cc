@@ -19,8 +19,10 @@
 #define TRACE_NAME "waveform.fst"
 #define DUT_TYPE Vring_2
 #define NUM_ENDPOINTS 2
+#define ENDPOINT_GRAN (~(0xFFFFFFFF >> (NUM_ENDPOINTS - 1)))
+#define TOTAL_REQUESTS 100
 
-#define GET_LOGIC(logic, idx) ( (value >> (idx * 8)) & 0xFF)
+#define GET_LOGIC(logic, idx) ((logic >> (idx * 8)) & 0xFF) 
 #define GET_ADDR(addr, idx) ( (addr >> (idx * 32)) & 0xFFFFFFFF )
 #define GET_PACKET_WEN(packet, idx) (packet[4UL + idx * 5] & 0x1)
 #define GET_PACKET_ID(packet, idx) (packet[3UL + idx * 5])
@@ -29,7 +31,7 @@
     (((uint64_t)((uint64_t)(packet[1UL + idx * 5])) << 32UL) | ((uint64_t)(packet[0UL + idx * 5])))
 
 #define SET_LOGIC(logic, value, idx) \
-    logic = (logic & (~(0xFF))) | ((value & 0xFF) << (idx * 8));
+    logic = ((logic) & (~(0x1 << (idx)))) | (((value) & 0x1) << (idx));
 #define SET_ADDR(addr, value, idx) \
     addr = (((uint64_t) addr) & (~(0xFFFFFFFF))) | ((((uint64_t) value) & 0xFFFFFFFF) << (idx * 32));
 #define SET_PACKET_WEN(packet, wen, idx) \
@@ -71,9 +73,16 @@ const TBCfg default_config {
 
 static TBCfg config;
 
-std::deque<netPacket> requestBufferQueue = {};
+std::vector<std::deque<netPacket>> requestBufferQueue (5);
 std::deque<netPacket> responseBufferQueue = {};
 std::deque<netPacket> networkQueue = {};
+
+int ENDPOINT_START_ADDRS[NUM_ENDPOINTS] = {
+    0x00000000,
+    0x80000000
+};
+int requestsSent[NUM_ENDPOINTS] = {};
+int requestsCompleted[NUM_ENDPOINTS] = {};
 
 vluint64_t sim_time = 0;
 vluint64_t cycles = 0;
@@ -90,11 +99,7 @@ void net_reset_tx (DUT_TYPE& dut);
 void net_reset_rx (DUT_TYPE& dut);
 void req_send (
     DUT_TYPE& dut,
-    int& requests_sent,
-    bool ren,
-    bool wen,
-    uint32_t addr,
-    uint64_t payload
+    int endpoint_idx
 );
 
 void print_config (TBCfg& config) {
@@ -210,7 +215,7 @@ void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
 void req_reset (DUT_TYPE& dut) {
     // into FIFO buffer
     for (int i = 0; i < NUM_ENDPOINTS; i++) {
-        SET_LOGIC(dut.req_en, 0, i)
+        SET_LOGIC(dut.req_en, 0, i);
         SET_PACKET_WEN(dut.req_packet, 0, i);
         SET_PACKET_ID(dut.req_packet, 0, i);
         SET_PACKET_ADDR(dut.req_packet, 0, i);
@@ -233,6 +238,53 @@ void resp_reset (DUT_TYPE& dut) {
         SET_PACKET_PAYLOAD(dut.resp_comp_packet, 0, i);
     }
 }
+
+void req_send (
+    DUT_TYPE& dut,
+    int endpoint_idx
+) {
+    // if the endpoint is not full
+    if (!GET_LOGIC(dut.req_full, endpoint_idx)) {
+        uint32_t r1 = std::rand();
+        uint32_t r2 = std::rand();
+
+        // Get a random enpoint that is not this current one.
+        int dest_endpoint = std::rand() % NUM_ENDPOINTS;
+        if (dest_endpoint == endpoint_idx) {
+            dest_endpoint = dest_endpoint == NUM_ENDPOINTS - 1 ? 0 : dest_endpoint + 1;
+        }
+
+        bool ren = r1 % 2;
+        bool wen = (r1 + 1) % 2;
+        uint64_t addr = ENDPOINT_START_ADDRS[dest_endpoint] + ((r1 + r2) % ENDPOINT_GRAN);
+        uint64_t payload = (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2));
+
+        std::cout << "[INFO] Creating Request to FIFO Router" << std::endl;
+        std::cout << "       req_en             : " << (ren || wen) << std::endl;
+        std::cout << "       req_packet.wen     : " << wen << std::endl;
+        std::cout << "       req_packet.addr    : 0x" << std::hex << addr << std::dec << std::endl;
+        std::cout << "       req_packet.payload : 0x" << std::hex << payload << std::dec << "\n" << std::endl;
+
+        SET_LOGIC(dut.req_en, (ren || wen), endpoint_idx);
+        SET_PACKET_WEN(dut.req_packet, wen, endpoint_idx);
+        SET_PACKET_ID(dut.req_packet, 0, endpoint_idx);
+        SET_PACKET_ADDR(dut.req_packet, addr, endpoint_idx);
+        SET_PACKET_PAYLOAD(dut.req_packet, payload, endpoint_idx);
+
+        netPacket packet {
+            .request = true,
+            .start_addr = ENDPOINT_START_ADDRS[endpoint_idx],
+            .wen = wen,
+            .addr = addr,
+            .payload = payload,
+            .payload_comp = 0
+        };
+
+        requestBufferQueue[endpoint_idx].push_back(packet);
+        requestsSent[endpoint_idx]++;
+    }
+}
+
 int main (int argc, char **argv) {
     if (auto result = parse_cli(argc, argv)) {
         config = *result;
@@ -265,6 +317,23 @@ int main (int argc, char **argv) {
 
     reset(dut, trace);
 
+    tick(dut, trace);
+
+    for(int i = 0; i < NUM_ENDPOINTS; i++) {
+        req_send(dut, i);
+    }
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
+    tick(dut, trace);
     tick(dut, trace);
 
     // End test bench

@@ -63,6 +63,7 @@ module fifo_router #(
 
 typedef struct packed {
     logic valid;
+    logic sent;
     packet_t packet;
 } fifo_router_entry_t;
 
@@ -113,19 +114,23 @@ always_comb begin : entryUpdate
     // The requester is requesting and it can write to the FIFO
     if (!fifo_router_full && req_en) begin
         next_fifo_router_buffer[req_pointer].valid = 0;
+        next_fifo_router_buffer[req_pointer].sent = 0;
         next_fifo_router_buffer[req_pointer].packet = req_packet;
 
         next_req_pointer = updatePointer(req_pointer);
     end
 
     // Issuing to the network
-    if (!fifo_router_empty) begin
+    if (!fifo_router_empty && !fifo_router_buffer[net_pointer].sent) begin
         net_en = 1;
         net_packet = fifo_router_buffer[net_pointer].packet;
         net_packet.id = net_pointer;
 
         // Only update the pointer when the network is not stalled
-        if (!net_stall) next_net_pointer = updatePointer(net_pointer);
+        if (!net_stall) begin
+            next_net_pointer = updatePointer(net_pointer);
+            next_fifo_router_buffer[req_pointer].sent = 1;
+        end
     end
 
     // Updating the buffer from the network

@@ -53,6 +53,9 @@ module endpoint #(
     // Stalls the responding FIFO
     input logic resp_stall,
 
+    // Lets responder know if RX FIFO is full/empty
+    output logic resp_full, resp_empty,
+
     // Initiates the responder to begin servicing this request
     output logic resp_en,
 
@@ -265,6 +268,8 @@ assign endpoint_tx_buffer_net_comp_packet = rx_arbiter_req_packet;
 assign req_comp_en = endpoint_tx_buffer_req_comp;
 assign req_comp_packet = endpoint_tx_buffer_req_comp_packet;
 
+assign resp_full = endpoint_rx_buffer_fifo_router_full;
+assign resp_empty = endpoint_rx_buffer_fifo_router_empty;
 assign endpoint_rx_buffer_req_en = rx_arbiter_resp_en;
 assign endpoint_rx_buffer_req_packet = rx_arbiter_resp_packet;
 assign endpoint_rx_buffer_req_comp_stall = tx_arbiter_resp_stall;
