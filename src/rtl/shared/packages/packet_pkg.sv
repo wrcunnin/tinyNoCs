@@ -28,8 +28,9 @@ typedef logic [ID_BITS-1:0] id_t;
 // Used by FIFO routers to prepackage data, i.e. before going out
 // onto the network, or to initialize requests
 typedef struct packed {
-    // Remove this when doing synthesis
+    `ifndef SYNTHESIS
     logic [30:0] padding;
+    `endif
 
     // Determines if packet is writing or reading
     logic wen;

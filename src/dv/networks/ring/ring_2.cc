@@ -22,7 +22,7 @@
 #define ENDPOINT_GRAN (~(0xFFFFFFFF >> (NUM_ENDPOINTS - 1)))
 #define TOTAL_REQUESTS 100
 
-#define GET_LOGIC(logic, idx) ((logic >> (idx * 8)) & 0xFF) 
+#define GET_LOGIC(logic, idx) ((logic >> (idx)) & 0x1) 
 #define GET_ADDR(addr, idx) ( (addr >> (idx * 32)) & 0xFFFFFFFF )
 #define GET_PACKET_WEN(packet, idx) (packet[4UL + idx * 5] & 0x1)
 #define GET_PACKET_ID(packet, idx) (packet[3UL + idx * 5])
@@ -62,6 +62,9 @@ struct netPacket {
     uint32_t addr;
     uint64_t payload;
     uint64_t payload_comp;
+
+    // TB only
+    bool uninitialized = true;
 };
 
 const TBCfg default_config {
@@ -73,8 +76,15 @@ const TBCfg default_config {
 
 static TBCfg config;
 
-std::vector<std::deque<netPacket>> requestBufferQueue (5);
-std::deque<netPacket> responseBufferQueue = {};
+// Modified by requesters
+// A queue of outgoing requests in a network
+std::vector<std::deque<netPacket>> requestBufferQueue (NUM_ENDPOINTS);
+
+// Modified by responders
+// This is a queue of what SHOULD reach a responder
+std::vector<std::deque<netPacket>> expectedRequestQueue (NUM_ENDPOINTS);
+
+// TODO: Is this needed?
 std::deque<netPacket> networkQueue = {};
 
 int ENDPOINT_START_ADDRS[NUM_ENDPOINTS] = {
@@ -95,9 +105,15 @@ void tick (DUT_TYPE& dut, VerilatedFstC& trace);
 void reset (DUT_TYPE& dut, VerilatedFstC& trace);
 void req_reset (DUT_TYPE& dut);
 void resp_reset (DUT_TYPE& dut);
-void net_reset_tx (DUT_TYPE& dut);
-void net_reset_rx (DUT_TYPE& dut);
 void req_send (
+    DUT_TYPE& dut,
+    int endpoint_idx
+);
+void req_comp (
+    DUT_TYPE& dut,
+    int endpoint_idx
+);
+void resp_send (
     DUT_TYPE& dut,
     int endpoint_idx
 );
@@ -109,7 +125,7 @@ void print_config (TBCfg& config) {
 }
 
 void print_help () {
-    std::cerr << "Usage: ./Vfifo_router [flags...]" << std::endl;
+    std::cerr << "Usage: ./Vring_2 [flags...]" << std::endl;
     std::cerr << "\t--trace-en: Enable FST wave tracing" << std::endl;
     std::cerr << "\t--cycle-limit n: Set cycle count limit to n" << std::endl;
     std::cerr << "\t--help: Print this" << std::endl;
@@ -244,9 +260,12 @@ void req_send (
     int endpoint_idx
 ) {
     // if the endpoint is not full
-    if (!GET_LOGIC(dut.req_full, endpoint_idx)) {
+    if (!GET_LOGIC(dut.req_full, endpoint_idx) && requestsSent[endpoint_idx] < TOTAL_REQUESTS) {
         uint32_t r1 = std::rand();
         uint32_t r2 = std::rand();
+        uint32_t r3 = std::rand();
+        uint32_t r4 = std::rand();
+
 
         // Get a random enpoint that is not this current one.
         int dest_endpoint = std::rand() % NUM_ENDPOINTS;
@@ -256,10 +275,10 @@ void req_send (
 
         bool ren = r1 % 2;
         bool wen = (r1 + 1) % 2;
-        uint64_t addr = ENDPOINT_START_ADDRS[dest_endpoint] + ((r1 + r2) % ENDPOINT_GRAN);
+        uint32_t addr = ENDPOINT_START_ADDRS[dest_endpoint] + ((r1 + r2) % ENDPOINT_GRAN);
         uint64_t payload = (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2));
 
-        std::cout << "[INFO] Creating Request to FIFO Router" << std::endl;
+        std::cout << "[INFO] At Cycle " << cycles << ", Creating Request to FIFO Router in Endpoint " << endpoint_idx << std::endl;
         std::cout << "       req_en             : " << (ren || wen) << std::endl;
         std::cout << "       req_packet.wen     : " << wen << std::endl;
         std::cout << "       req_packet.addr    : 0x" << std::hex << addr << std::dec << std::endl;
@@ -277,11 +296,93 @@ void req_send (
             .wen = wen,
             .addr = addr,
             .payload = payload,
-            .payload_comp = 0
+            .payload_comp = wen ? payload : (( (uint64_t)(r3) ) << 32) + ((uint64_t)(r4)),
+            .uninitialized = false
         };
 
         requestBufferQueue[endpoint_idx].push_back(packet);
+        expectedRequestQueue[dest_endpoint].push_back(packet);
         requestsSent[endpoint_idx]++;
+    }
+}
+
+void req_comp (
+    DUT_TYPE& dut,
+    int endpoint_idx
+) {
+    if (GET_LOGIC(dut.req_comp_en, endpoint_idx)) {
+        bool comp_wen = GET_PACKET_WEN(dut.req_comp_packet, endpoint_idx);
+        uint32_t comp_addr = GET_PACKET_ADDR(dut.req_comp_packet, endpoint_idx);
+        uint64_t comp_payload = GET_PACKET_PAYLOAD(dut.req_comp_packet, endpoint_idx);
+
+        netPacket packet = requestBufferQueue[endpoint_idx].front();
+        requestBufferQueue[endpoint_idx].pop_front();
+
+        std::cout << "[INFO] At Cycle " << cycles << ", Committing Request from FIFO Router in Endpoint " << endpoint_idx << std::endl;
+        std::cout << "       req_addr_comp    : " << comp_wen << std::endl;
+        std::cout << "       expected addr    : " << packet.wen << std::endl;
+        std::cout << "       req_addr_comp    : 0x" << std::hex << comp_addr << std::dec << std::endl;
+        std::cout << "       expected addr    : 0x" << std::hex << packet.addr << std::dec << std::endl;
+        std::cout << "       req_payload_comp : 0x" << std::hex << comp_payload << std::dec << std::endl;
+        std::cout << "       expected payload : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
+
+        assert(packet.wen == comp_wen);
+        assert(packet.addr == comp_addr);
+        assert(packet.payload_comp == comp_payload);
+
+        SET_LOGIC(dut.req_comp_stall, 0, endpoint_idx);
+        requestsCompleted[endpoint_idx]++;
+    }
+}
+
+void resp_send (
+    DUT_TYPE& dut,
+    int endpoint_idx
+) {
+    // if there is a request in the response queue
+    if (GET_LOGIC(dut.resp_en, endpoint_idx)) {
+        bool req_wen = (bool) GET_PACKET_WEN(dut.resp_packet, endpoint_idx);
+        uint32_t req_id = GET_PACKET_ID(dut.resp_packet, endpoint_idx);
+        uint32_t req_addr = GET_PACKET_ADDR(dut.resp_packet, endpoint_idx);
+        uint64_t req_payload = GET_PACKET_PAYLOAD(dut.resp_packet, endpoint_idx);
+
+        assert((req_addr & ENDPOINT_GRAN) == (ENDPOINT_START_ADDRS[endpoint_idx]));
+        
+        std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
+        std::cout << "       wen          : " << req_wen << std::endl;
+        std::cout << "       addr         : 0x" << std::hex << req_addr << std::dec << std::endl;
+        std::cout << "       payload      : 0x" << std::hex << req_payload << std::dec << std::endl;
+        // iterate through the expected response queue, make sure that the packet we are receiving
+        netPacket packet;
+        for (std::deque<netPacket>::iterator it = expectedRequestQueue[endpoint_idx].begin(); it != expectedRequestQueue[endpoint_idx].end(); ++it) {
+            if (it->wen == req_wen && it->addr == req_addr && it->payload == req_payload) {
+                packet = *it;
+                expectedRequestQueue[endpoint_idx].erase(it);
+                break;
+            }
+            
+        // std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
+            std::cout << "       it->wen    : " << it->wen << std::endl;
+            std::cout << "       it>addr    : 0x" << std::hex << it->addr << std::dec << std::endl;
+            std::cout << "       it>payload : 0x" << std::hex << it->payload << std::dec << std::endl;
+        }
+        assert(!packet.uninitialized);
+
+        // let the response buffer know not to stall
+        SET_LOGIC(dut.resp_stall, 0, endpoint_idx);
+
+        // return the payload back to the proper ID in the response queue
+        SET_ADDR(dut.resp_comp_return_addr, packet.start_addr, endpoint_idx);
+        SET_LOGIC(dut.resp_comp_en, 1, endpoint_idx);
+        SET_PACKET_ID(dut.resp_comp_packet, req_id, endpoint_idx);
+        SET_PACKET_PAYLOAD(dut.resp_comp_packet, packet.payload_comp, endpoint_idx);
+
+        // std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
+        // std::cout << "       start_addr   : 0x" << std::hex << packet.start_addr << std::dec << std::endl;
+        // std::cout << "       wen          : " << req_wen << std::endl;
+        // std::cout << "       addr         : 0x" << std::hex << req_addr << std::dec << std::endl;
+        // std::cout << "       payload      : 0x" << std::hex << req_payload << std::dec << std::endl;
+        // std::cout << "       payload_comp : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
     }
 }
 
@@ -319,22 +420,28 @@ int main (int argc, char **argv) {
 
     tick(dut, trace);
 
-    for(int i = 0; i < NUM_ENDPOINTS; i++) {
-        req_send(dut, i);
+    int start_cycle = cycles;
+
+    bool done = false;
+    while (!done && (cycles < config.cycle_limit)) {
+        // send/complete requests & responses
+        for(int i = 0; i < NUM_ENDPOINTS; i++) {
+            req_send(dut, i);
+            resp_send(dut, i);
+            req_comp(dut, i);
+        }
+        // tick the clock
+        tick(dut, trace);
+
+        // check to see if all requests have been completed
+        done = true;
+        for (int i = 0; i < NUM_ENDPOINTS; i++) {
+            if (requestsCompleted[i] < TOTAL_REQUESTS) {
+                done = false;
+                break;
+            }
+        }
     }
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
-    tick(dut, trace);
 
     // End test bench
     auto tend = std::chrono::high_resolution_clock::now();
@@ -347,6 +454,16 @@ int main (int argc, char **argv) {
     if (cycles >= config.cycle_limit)
         std::cout << "WARNING: Hit max cycle limit! Consider increasing cycle limit." << std::endl;
     
+    if (done) {
+        int total_cycles = cycles - start_cycle;
+        int total_requests = TOTAL_REQUESTS * NUM_ENDPOINTS;
+        float rcr = ((float) total_requests) / ((float) total_cycles);
+        std::cout << "[INFO] tinyNoC TB Statistics" << std::endl;
+        std::cout << "       Completed Requests in " << total_cycles << " cycles." << std::endl;
+        std::cout << "       Request Completion Rate: " << rcr << " requests per cycle" << std::endl;
+        std::cout << "       Cycles per Request: " << 1.0f / rcr << std::endl;
+    }
+
     if(config.trace_en)
         trace.close();
 
