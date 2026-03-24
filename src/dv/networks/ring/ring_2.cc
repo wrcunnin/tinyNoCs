@@ -348,11 +348,7 @@ void resp_send (
         uint64_t req_payload = GET_PACKET_PAYLOAD(dut.resp_packet, endpoint_idx);
 
         assert((req_addr & ENDPOINT_GRAN) == (ENDPOINT_START_ADDRS[endpoint_idx]));
-        
-        std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
-        std::cout << "       wen          : " << req_wen << std::endl;
-        std::cout << "       addr         : 0x" << std::hex << req_addr << std::dec << std::endl;
-        std::cout << "       payload      : 0x" << std::hex << req_payload << std::dec << std::endl;
+
         // iterate through the expected response queue, make sure that the packet we are receiving
         netPacket packet;
         for (std::deque<netPacket>::iterator it = expectedRequestQueue[endpoint_idx].begin(); it != expectedRequestQueue[endpoint_idx].end(); ++it) {
@@ -373,12 +369,12 @@ void resp_send (
         SET_PACKET_ID(dut.resp_comp_packet, req_id, endpoint_idx);
         SET_PACKET_PAYLOAD(dut.resp_comp_packet, packet.payload_comp, endpoint_idx);
 
-        // std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
-        // std::cout << "       start_addr   : 0x" << std::hex << packet.start_addr << std::dec << std::endl;
-        // std::cout << "       wen          : " << req_wen << std::endl;
-        // std::cout << "       addr         : 0x" << std::hex << req_addr << std::dec << std::endl;
-        // std::cout << "       payload      : 0x" << std::hex << req_payload << std::dec << std::endl;
-        // std::cout << "       payload_comp : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
+        std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
+        std::cout << "       start_addr   : 0x" << std::hex << packet.start_addr << std::dec << std::endl;
+        std::cout << "       wen          : " << req_wen << std::endl;
+        std::cout << "       addr         : 0x" << std::hex << req_addr << std::dec << std::endl;
+        std::cout << "       payload      : 0x" << std::hex << req_payload << std::dec << std::endl;
+        std::cout << "       payload_comp : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
     }
 }
 
