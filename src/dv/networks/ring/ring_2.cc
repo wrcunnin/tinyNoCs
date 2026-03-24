@@ -18,9 +18,10 @@
 
 #define TRACE_NAME "waveform.fst"
 #define DUT_TYPE Vring_2
+#define NETWORK_STYLE "Ring"
 #define NUM_ENDPOINTS 2
 #define ENDPOINT_GRAN (~(0xFFFFFFFF >> (NUM_ENDPOINTS - 1)))
-#define TOTAL_REQUESTS 100
+#define TOTAL_REQUESTS 10000
 
 #define GET_LOGIC(logic, idx) ((logic >> (idx)) & 0x1) 
 #define GET_ADDR(addr, idx) ( (addr >> (idx * 32)) & 0xFFFFFFFF )
@@ -360,11 +361,6 @@ void resp_send (
                 expectedRequestQueue[endpoint_idx].erase(it);
                 break;
             }
-            
-        // std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
-            std::cout << "       it->wen    : " << it->wen << std::endl;
-            std::cout << "       it>addr    : 0x" << std::hex << it->addr << std::dec << std::endl;
-            std::cout << "       it>payload : 0x" << std::hex << it->payload << std::dec << std::endl;
         }
         assert(!packet.uninitialized);
 
@@ -449,19 +445,22 @@ int main (int argc, char **argv) {
     std::cout   << "Simulated " << cycles 
                 << " cycles in " << ms.count() << "ms" 
                 << ", rate of " << (float)cycles / ((float)ms.count() / 1000.0) 
-                << " cycles per second." << std::endl;
+                << " cycles per second.\n" << std::endl;
 
     if (cycles >= config.cycle_limit)
-        std::cout << "WARNING: Hit max cycle limit! Consider increasing cycle limit." << std::endl;
+        std::cout << "WARNING: Hit max cycle limit! Consider increasing cycle limit.\n" << std::endl;
     
     if (done) {
         int total_cycles = cycles - start_cycle;
         int total_requests = TOTAL_REQUESTS * NUM_ENDPOINTS;
         float rcr = ((float) total_requests) / ((float) total_cycles);
         std::cout << "[INFO] tinyNoC TB Statistics" << std::endl;
-        std::cout << "       Completed Requests in " << total_cycles << " cycles." << std::endl;
+        std::cout << "       Network Style: " << NETWORK_STYLE << std::endl;
+        std::cout << "       Number of Endpoints: " << NUM_ENDPOINTS << std::endl;
+        std::cout << "       Total requests (for all endpoints): " << total_requests << std::endl;
+        std::cout << "       Cycles to complete requests: " << total_cycles << std::endl;
         std::cout << "       Request Completion Rate: " << rcr << " requests per cycle" << std::endl;
-        std::cout << "       Cycles per Request: " << 1.0f / rcr << std::endl;
+        std::cout << "       Cycles per Request: " << 1.0f / rcr << "\n" << std::endl;
     }
 
     if(config.trace_en)
