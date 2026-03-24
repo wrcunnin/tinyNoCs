@@ -18,9 +18,17 @@ filesets:
       - ring_2.sv
     file_type: systemVerilogSource
 
+  ring_16:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - ring_16.sv
+    file_type: systemVerilogSource
+
 targets:
   default: &default
     filesets:
       - ring_xbar
       - ring_2
+      - ring_16
 

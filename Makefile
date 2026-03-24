@@ -8,6 +8,11 @@ ring-2:
 	build/tinynocs_src_dv-ring_0.0.1/tb_ring_2-verilator/Vring_2 --trace-en
 	@echo "Built and ran a 2-endpoint ring network with basic params\n"
 
+ring-16:
+	fusesoc --cores-root . run --build --target tb_ring_16 tinynocs:src:dv-ring
+	build/tinynocs_src_dv-ring_0.0.1/tb_ring_16-verilator/Vring_16 --trace-en
+	@echo "Built and ran a 16-endpoint ring network with basic params\n"
+
 ###################################
 # Endpoint Test Benches
 ###################################
@@ -63,4 +68,4 @@ fifo-router-all: fifo-router fifo-router-10 fifo-router-64
 # Utility
 ###################################
 clean:
-	rm -rf build
+	rm -rf build waveform.fst.hier
