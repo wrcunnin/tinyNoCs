@@ -180,7 +180,7 @@ logic                       net_rx_buffer_empty;
 fifo_basic #(
     .DEPTH(RX_BUFFER_DEPTH),
     .DATA_WIDTH(NET_PACKET_BITS)
-) net_rx_buffer_rx (
+) net_rx_buffer (
     .CLK(CLK),
     .nRST(nRST),
     .full(net_rx_buffer_full),
