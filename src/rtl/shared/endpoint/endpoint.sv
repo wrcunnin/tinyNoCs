@@ -168,6 +168,30 @@ fifo_router #(
 
 
 /************************************************/
+/* net_rx_buffer                                */
+/************************************************/
+logic                       net_rx_buffer_ren;
+logic                       net_rx_buffer_wen;
+logic [NET_PACKET_BITS-1:0] net_rx_buffer_rdata;
+logic [NET_PACKET_BITS-1:0] net_rx_buffer_wdata;
+logic                       net_rx_buffer_full;
+logic                       net_rx_buffer_empty;
+
+fifo_basic #(
+    .DEPTH(RX_BUFFER_DEPTH),
+    .DATA_WIDTH(NET_PACKET_BITS)
+) net_rx_buffer_rx (
+    .CLK(CLK),
+    .nRST(nRST),
+    .full(net_rx_buffer_full),
+    .empty(net_rx_buffer_empty),
+    .ren(net_rx_buffer_ren),
+    .rdata(net_rx_buffer_rdata),
+    .wen(net_rx_buffer_wen),
+    .wdata(net_rx_buffer_wdata)
+);
+
+/************************************************/
 /* return_addr_buffer                           */
 /************************************************/
 logic                    return_addr_buffer_ren;
@@ -285,9 +309,13 @@ assign return_addr_buffer_wdata = rx_arbiter_resp_return_addr;
 
 assign rx_arbiter_req_stall = 0;
 assign rx_arbiter_resp_stall = endpoint_rx_buffer_fifo_router_full;
-assign rx_arbiter_net_en = net_en_rx;
-assign rx_arbiter_net_packet = net_packet_rx;
-assign net_stall_rx = rx_arbiter_net_stall;
+assign rx_arbiter_net_en = !net_rx_buffer_empty;
+assign rx_arbiter_net_packet = net_rx_buffer_rdata;
+assign net_stall_rx = net_rx_buffer_full;
+
+assign net_rx_buffer_ren = !rx_arbiter_net_stall;
+assign net_rx_buffer_wen = net_en_rx;
+assign net_rx_buffer_wdata = net_packet_rx;
 
 assign tx_arbiter_req_en = endpoint_tx_buffer_net_en;
 assign tx_arbiter_req_packet = endpoint_tx_buffer_net_packet;

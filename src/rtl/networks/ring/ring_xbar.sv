@@ -117,32 +117,7 @@ fifo_basic #(
 
 
 /************************************************/
-/* endpoint_buffer_tx                           */
-/************************************************/
-logic                       endpoint_buffer_tx_ren;
-logic                       endpoint_buffer_tx_wen;
-logic [NET_PACKET_BITS-1:0] endpoint_buffer_tx_rdata;
-logic [NET_PACKET_BITS-1:0] endpoint_buffer_tx_wdata;
-logic                       endpoint_buffer_tx_full;
-logic                       endpoint_buffer_tx_empty;
-
-fifo_basic #(
-    .DEPTH(EP_BUFFER_TX_DEPTH),
-    .DATA_WIDTH(NET_PACKET_BITS)
-) endpoint_buffer_tx (
-    .CLK(CLK),
-    .nRST(nRST),
-    .full(endpoint_buffer_tx_full),
-    .empty(endpoint_buffer_tx_empty),
-    .ren(endpoint_buffer_tx_ren),
-    .rdata(endpoint_buffer_tx_rdata),
-    .wen(endpoint_buffer_tx_wen),
-    .wdata(endpoint_buffer_tx_wdata)
-);
-
-
-/************************************************/
-/* endpoint_buffer_tx                           */
+/* xbarb                                        */
 /************************************************/
 logic        xbarb_net_stall_rx;
 logic        xbarb_net_en_rx;
@@ -184,8 +159,8 @@ assign net_stall_rx = xbarb_net_stall_rx;
 assign net_en_tx = !net_buffer_tx_empty;
 assign net_packet_tx = net_buffer_tx_rdata;
 assign endpoint_stall_rx = endpoint_buffer_rx_full;
-assign endpoint_en_tx = !endpoint_buffer_tx_empty;
-assign endpoint_packet_tx = endpoint_buffer_tx_rdata;
+assign endpoint_en_tx = xbarb_endpoint_en_tx;
+assign endpoint_packet_tx = xbarb_endpoint_packet_tx;
 
 assign net_buffer_tx_ren = !net_stall_tx;
 assign net_buffer_tx_wen = xbarb_net_en_tx;
@@ -195,16 +170,12 @@ assign endpoint_buffer_rx_ren = !xbarb_endpoint_stall_rx;
 assign endpoint_buffer_rx_wen = endpoint_en_rx;
 assign endpoint_buffer_rx_wdata = endpoint_packet_rx;
 
-assign endpoint_buffer_tx_ren = !endpoint_stall_tx;
-assign endpoint_buffer_tx_wen = xbarb_endpoint_en_tx;
-assign endpoint_buffer_tx_wdata = xbarb_endpoint_packet_tx;
-
 assign xbarb_net_en_rx = net_en_rx;
 assign xbarb_net_packet_rx = net_packet_rx;
 assign xbarb_net_stall_tx = net_buffer_tx_full;
 assign xbarb_endpoint_en_rx = !endpoint_buffer_rx_empty;
 assign xbarb_endpoint_packet_rx = endpoint_buffer_rx_rdata;
-assign xbarb_endpoint_stall_tx = endpoint_buffer_tx_full;
+assign xbarb_endpoint_stall_tx = endpoint_stall_tx;
 
 always_comb begin : sanityChecks
     assert (ENDPOINT_ADDR_START <= ENDPOINT_ADDR_STOP);
