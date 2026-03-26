@@ -186,6 +186,24 @@ always_comb begin : controlFullEmpty
     end
 end
 
+`ifndef SYNTHESIS
+logic [DEPTH_BITS:0] occupancy, next_occupancy;
+always_ff @( posedge CLK, negedge nRST ) begin
+    if (!nRST)
+        occupancy <= '0;
+    else
+        occupancy <= next_occupancy;
+end
+always_comb begin
+    next_occupancy = occupancy;
+    if (!fifo_router_full && req_en)
+        next_occupancy = next_occupancy + 1;
+
+    if (req_comp && !req_comp_stall)
+        next_occupancy = next_occupancy - 1; 
+end
+`endif
+
 function logic [DEPTH_BITS-1:0] updatePointer;
     input logic [DEPTH_BITS-1:0] pointer;
 
