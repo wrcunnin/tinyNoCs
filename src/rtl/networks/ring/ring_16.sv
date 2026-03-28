@@ -124,8 +124,8 @@ assign rxbar_``id``_endpoint_packet_rx = endpoint_``id``_net_packet_tx; \
 assign rxbar_``id``_endpoint_stall_tx = endpoint_``id``_net_stall_rx;
 
 module ring_16 #(
-    parameter int TX_BUFFER_DEPTH,
-    parameter int RX_BUFFER_DEPTH
+    parameter int TX_BUFFER_DEPTH = 8,
+    parameter int RX_BUFFER_DEPTH = 8
 ) (
     // Clock, async reset
     input logic CLK, nRST,
