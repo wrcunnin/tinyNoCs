@@ -93,7 +93,7 @@ std::vector<std::deque<netPacket>> expectedRequestQueue (NUM_ENDPOINTS);
 // TODO: Is this needed?
 std::deque<netPacket> networkQueue = {};
 
-int ENDPOINT_START_ADDRS[NUM_ENDPOINTS] = {
+uint32_t ENDPOINT_START_ADDRS[NUM_ENDPOINTS] = {
     0x00000000,
     0x10000000,
     0x20000000,
