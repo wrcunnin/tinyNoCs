@@ -53,6 +53,7 @@ module endpoint_rx_arbiter (
 always_comb begin : packetSelection
     req_en = 0;
     req_packet = '0;
+    req_return_addr = '0;
     resp_en = 0;
     resp_packet = '0;
     resp_return_addr = '0;
