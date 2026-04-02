@@ -3,14 +3,6 @@ name: tinynocs:src:dv-ring:0.0.1
 description: DV modules for Ring Networks
 
 filesets:
-  ring_2:
-    depend:
-      - tinynocs:src:rtl-shared:0.0.1
-      - tinynocs:src:rtl-ring:0.0.1
-    files:
-      - ring_2.cc : {file_type: cppSource}
-    file_type: systemVerilogSource
-
   ring_16:
     depend:
       - tinynocs:src:rtl-shared:0.0.1
@@ -37,17 +29,6 @@ targets:
           - --trace-threads 4
           - --threads 4
           - -CFLAGS "-std=c++23"
-
-  tb_ring_2:
-    <<: *default
-    toplevel: ring_2
-    filesets_append:
-      - ring_2
-    tools:
-      verilator:
-        verilator_options_append:
-          - -GTX_BUFFER_DEPTH=8
-          - -GRX_BUFFER_DEPTH=8
 
   tb_ring_16:
     <<: *default

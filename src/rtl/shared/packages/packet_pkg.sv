@@ -60,4 +60,119 @@ typedef struct packed {
 
 parameter NET_PACKET_BITS = $bits(net_packet_t);
 
+
+
+`define CREATE_ENDPOINT_RING_XBAR(id, start_addr, stop_addr) \
+logic        endpoint_``id``_req_full; \
+logic        endpoint_``id``_req_empty; \
+logic        endpoint_``id``_req_en; \
+packet_t     endpoint_``id``_req_packet; \
+logic        endpoint_``id``_req_comp_stall; \
+logic        endpoint_``id``_req_comp_en; \
+packet_t     endpoint_``id``_req_comp_packet; \
+logic        endpoint_``id``_resp_full; \
+logic        endpoint_``id``_resp_empty; \
+logic        endpoint_``id``_resp_stall; \
+logic        endpoint_``id``_resp_en; \
+packet_t     endpoint_``id``_resp_packet; \
+logic        endpoint_``id``_resp_comp_en; \
+addr_t       endpoint_``id``_resp_comp_return_addr; \
+packet_t     endpoint_``id``_resp_comp_packet; \
+logic        endpoint_``id``_net_stall_tx; \
+logic        endpoint_``id``_net_en_tx; \
+net_packet_t endpoint_``id``_net_packet_tx; \
+logic        endpoint_``id``_net_stall_rx; \
+logic        endpoint_``id``_net_en_rx; \
+net_packet_t endpoint_``id``_net_packet_rx; \
+endpoint #( \
+    .TX_BUFFER_DEPTH(TX_BUFFER_DEPTH), \
+    .RX_BUFFER_DEPTH(RX_BUFFER_DEPTH), \
+    .ENDPOINT_ADDR(start_addr) \
+) endpoint_``id`` ( \
+    .CLK(CLK), \
+    .nRST(nRST), \
+    .req_full(endpoint_``id``_req_full), \
+    .req_empty(endpoint_``id``_req_empty), \
+    .req_en(endpoint_``id``_req_en), \
+    .req_packet(endpoint_``id``_req_packet), \
+    .req_comp_stall(endpoint_``id``_req_comp_stall), \
+    .req_comp_en(endpoint_``id``_req_comp_en), \
+    .req_comp_packet(endpoint_``id``_req_comp_packet), \
+    .resp_full(endpoint_``id``_resp_full), \
+    .resp_empty(endpoint_``id``_resp_empty), \
+    .resp_stall(endpoint_``id``_resp_stall), \
+    .resp_en(endpoint_``id``_resp_en), \
+    .resp_packet(endpoint_``id``_resp_packet), \
+    .resp_comp_en(endpoint_``id``_resp_comp_en), \
+    .resp_comp_return_addr(endpoint_``id``_resp_comp_return_addr), \
+    .resp_comp_packet(endpoint_``id``_resp_comp_packet), \
+    .net_stall_tx(endpoint_``id``_net_stall_tx), \
+    .net_en_tx(endpoint_``id``_net_en_tx), \
+    .net_packet_tx(endpoint_``id``_net_packet_tx), \
+    .net_stall_rx(endpoint_``id``_net_stall_rx), \
+    .net_en_rx(endpoint_``id``_net_en_rx), \
+    .net_packet_rx(endpoint_``id``_net_packet_rx) \
+); \
+\
+logic        rxbar_``id``_net_stall_rx; \
+logic        rxbar_``id``_net_en_rx; \
+net_packet_t rxbar_``id``_net_packet_rx; \
+logic        rxbar_``id``_net_stall_tx; \
+logic        rxbar_``id``_net_en_tx; \
+net_packet_t rxbar_``id``_net_packet_tx; \
+logic        rxbar_``id``_endpoint_stall_rx; \
+logic        rxbar_``id``_endpoint_en_rx; \
+net_packet_t rxbar_``id``_endpoint_packet_rx; \
+logic        rxbar_``id``_endpoint_stall_tx; \
+logic        rxbar_``id``_endpoint_en_tx; \
+net_packet_t rxbar_``id``_endpoint_packet_tx; \
+ring_xbar #( \
+    .ENDPOINT_ADDR_START(start_addr), \
+    .ENDPOINT_ADDR_STOP(stop_addr), \
+    .NET_BUFFER_RX_DEPTH(2*RX_BUFFER_DEPTH), \
+    .EP_BUFFER_RX_DEPTH(RX_BUFFER_DEPTH) \
+) rxbar_``id`` ( \
+    .CLK(CLK), \
+    .nRST(nRST), \
+    .net_stall_rx(rxbar_``id``_net_stall_rx), \
+    .net_en_rx(rxbar_``id``_net_en_rx), \
+    .net_packet_rx(rxbar_``id``_net_packet_rx), \
+    .net_stall_tx(rxbar_``id``_net_stall_tx), \
+    .net_en_tx(rxbar_``id``_net_en_tx), \
+    .net_packet_tx(rxbar_``id``_net_packet_tx), \
+    .endpoint_stall_rx(rxbar_``id``_endpoint_stall_rx), \
+    .endpoint_en_rx(rxbar_``id``_endpoint_en_rx), \
+    .endpoint_packet_rx(rxbar_``id``_endpoint_packet_rx), \
+    .endpoint_stall_tx(rxbar_``id``_endpoint_stall_tx), \
+    .endpoint_en_tx(rxbar_``id``_endpoint_en_tx), \
+    .endpoint_packet_tx(rxbar_``id``_endpoint_packet_tx) \
+);
+
+`define CONNECT_RING_XBAR(id, rx_id, tx_id) \
+assign req_full[id] = endpoint_``id``_req_full; \
+assign req_empty[id] = endpoint_``id``_req_empty; \
+assign req_comp_en[id] = endpoint_``id``_req_comp_en; \
+assign req_comp_packet[id] = endpoint_``id``_req_comp_packet; \
+assign resp_full[id] = endpoint_``id``_resp_full; \
+assign resp_empty[id] = endpoint_``id``_resp_empty; \
+assign resp_packet[id] = endpoint_``id``_resp_packet; \
+assign resp_en[id] = endpoint_``id``_resp_en; \
+assign endpoint_``id``_req_en = req_en[id]; \
+assign endpoint_``id``_req_packet = req_packet[id]; \
+assign endpoint_``id``_req_comp_stall = req_comp_stall[id]; \
+assign endpoint_``id``_resp_stall = resp_stall[id]; \
+assign endpoint_``id``_resp_comp_en = resp_comp_en[id]; \
+assign endpoint_``id``_resp_comp_return_addr = resp_comp_return_addr[id]; \
+assign endpoint_``id``_resp_comp_packet = resp_comp_packet[id]; \
+assign endpoint_``id``_net_stall_tx = rxbar_``id``_endpoint_stall_rx; \
+assign endpoint_``id``_net_en_rx = rxbar_``id``_endpoint_en_tx; \
+assign endpoint_``id``_net_packet_rx = rxbar_``id``_endpoint_packet_tx; \
+assign rxbar_``id``_net_en_rx = rxbar_``rx_id``_net_en_tx; \
+assign rxbar_``id``_net_packet_rx = rxbar_``rx_id``_net_packet_tx; \
+assign rxbar_``id``_net_stall_tx = rxbar_``tx_id``_net_stall_rx; \
+assign rxbar_``id``_endpoint_en_rx = endpoint_``id``_net_en_tx; \
+assign rxbar_``id``_endpoint_packet_rx = endpoint_``id``_net_packet_tx; \
+assign rxbar_``id``_endpoint_stall_tx = endpoint_``id``_net_stall_rx;
+
+
 endpackage

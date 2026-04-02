@@ -13,9 +13,8 @@ import packet_pkg::*;
 module ring_xbar #(
     parameter int unsigned ENDPOINT_ADDR_START,
     parameter int unsigned ENDPOINT_ADDR_STOP,
-    parameter int NET_BUFFER_TX_DEPTH,
-    parameter int EP_BUFFER_RX_DEPTH,
-    parameter int EP_BUFFER_TX_DEPTH
+    parameter int NET_BUFFER_RX_DEPTH,
+    parameter int EP_BUFFER_RX_DEPTH
 ) (
     // Clock, async reset
     input logic CLK, nRST,
@@ -67,27 +66,27 @@ module ring_xbar #(
 );
 
 /************************************************/
-/* net_buffer_tx                                */
+/* net_buffer_rx                                */
 /************************************************/
-logic                       net_buffer_tx_ren;
-logic                       net_buffer_tx_wen;
-logic [NET_PACKET_BITS-1:0] net_buffer_tx_rdata;
-logic [NET_PACKET_BITS-1:0] net_buffer_tx_wdata;
-logic                       net_buffer_tx_full;
-logic                       net_buffer_tx_empty;
+logic                       net_buffer_rx_ren;
+logic                       net_buffer_rx_wen;
+logic [NET_PACKET_BITS-1:0] net_buffer_rx_rdata;
+logic [NET_PACKET_BITS-1:0] net_buffer_rx_wdata;
+logic                       net_buffer_rx_full;
+logic                       net_buffer_rx_empty;
 
 fifo_basic #(
-    .DEPTH(NET_BUFFER_TX_DEPTH),
+    .DEPTH(NET_BUFFER_RX_DEPTH),
     .DATA_WIDTH(NET_PACKET_BITS)
-) net_buffer_tx (
+) net_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
-    .full(net_buffer_tx_full),
-    .empty(net_buffer_tx_empty),
-    .ren(net_buffer_tx_ren),
-    .rdata(net_buffer_tx_rdata),
-    .wen(net_buffer_tx_wen),
-    .wdata(net_buffer_tx_wdata)
+    .full(net_buffer_rx_full),
+    .empty(net_buffer_rx_empty),
+    .ren(net_buffer_rx_ren),
+    .rdata(net_buffer_rx_rdata),
+    .wen(net_buffer_rx_wen),
+    .wdata(net_buffer_rx_wdata)
 );
 
 
@@ -155,24 +154,24 @@ ring_xbar_arbiter #(
 /************************************************/
 /* assigns                                      */
 /************************************************/
-assign net_stall_rx = xbarb_net_stall_rx;
-assign net_en_tx = !net_buffer_tx_empty;
-assign net_packet_tx = net_buffer_tx_rdata;
+assign net_stall_rx = net_buffer_rx_full;
+assign net_en_tx = xbarb_net_en_tx;
+assign net_packet_tx = xbarb_net_packet_tx;
 assign endpoint_stall_rx = endpoint_buffer_rx_full;
 assign endpoint_en_tx = xbarb_endpoint_en_tx;
 assign endpoint_packet_tx = xbarb_endpoint_packet_tx;
 
-assign net_buffer_tx_ren = !net_stall_tx;
-assign net_buffer_tx_wen = xbarb_net_en_tx;
-assign net_buffer_tx_wdata = xbarb_net_packet_tx;
+assign net_buffer_rx_ren = !xbarb_net_stall_rx;
+assign net_buffer_rx_wen = net_en_rx;
+assign net_buffer_rx_wdata = net_packet_rx;
 
 assign endpoint_buffer_rx_ren = !xbarb_endpoint_stall_rx;
 assign endpoint_buffer_rx_wen = endpoint_en_rx;
 assign endpoint_buffer_rx_wdata = endpoint_packet_rx;
 
-assign xbarb_net_en_rx = net_en_rx;
-assign xbarb_net_packet_rx = net_packet_rx;
-assign xbarb_net_stall_tx = net_buffer_tx_full;
+assign xbarb_net_en_rx = !net_buffer_rx_empty;
+assign xbarb_net_packet_rx = net_buffer_rx_rdata;
+assign xbarb_net_stall_tx = net_stall_tx;
 assign xbarb_endpoint_en_rx = !endpoint_buffer_rx_empty;
 assign xbarb_endpoint_packet_rx = endpoint_buffer_rx_rdata;
 assign xbarb_endpoint_stall_tx = endpoint_stall_tx;
