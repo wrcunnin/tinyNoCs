@@ -50,6 +50,7 @@
 
 struct TBCfg {
     bool trace_en;
+    bool perfect_mapping;
     bool split_endpoints;
     unsigned long cycle_limit;
     DUT_TYPE *dutp;
@@ -74,6 +75,7 @@ struct netPacket {
 
 const TBCfg default_config {
     .trace_en = false,
+    .perfect_mapping = false,
     .split_endpoints = false,
     .cycle_limit = 1000000,
     .dutp = NULL,
@@ -110,6 +112,10 @@ uint32_t ENDPOINT_START_ADDRS[NUM_ENDPOINTS] = {
     0xD0000000,
     0xE0000000,
     0xF0000000
+};
+uint32_t PERFECT_MAPPING_ADDR[NUM_ENDPOINTS] = {
+    8, 9, 10, 11, 12, 13, 14, 15,
+    0, 1,  2,  3,  4,  5,  6,  7
 };
 int requestsSent[NUM_ENDPOINTS] = {};
 int requestsCompleted[NUM_ENDPOINTS] = {};
@@ -148,6 +154,7 @@ void print_help () {
     std::cerr << "Usage: ./Vring_16 [flags...]" << std::endl;
     std::cerr << "\t--trace-en: Enable FST wave tracing" << std::endl;
     std::cerr << "\t--split-endpoints: Split the endpoints into requester/responder" << std::endl;
+    std::cerr << "\t--perfect-mapping: Split the endpoints into requester/responder & assign a perfect mapping" << std::endl;
     std::cerr << "\t--cycle-limit n: Set cycle count limit to n" << std::endl;
     std::cerr << "\t--help: Print this" << std::endl;
 }
@@ -156,6 +163,7 @@ auto parse_cli (int argc, char **argv) -> std::optional<TBCfg> {
     static struct option long_options[] = {
         {"trace-en",        no_argument,        0, 't'},
         {"split-endpoints", no_argument,        0, 's'},
+        {"perfect-mapping", no_argument,        0, 'p'},
         {"cycle-limit",     required_argument,  0, 'c'},
         {"help",            no_argument,        0, 'h'},
         {0, 0, 0, 0}
@@ -166,7 +174,7 @@ auto parse_cli (int argc, char **argv) -> std::optional<TBCfg> {
     char *endp = NULL;
 
     for(;;) {
-        int c = getopt_long(argc, argv, "t:c:h", long_options, &option_index);
+        int c = getopt_long(argc, argv, "t:s:p:c:h", long_options, &option_index);
         if(c == -1) {
             break;
         }
@@ -181,6 +189,10 @@ auto parse_cli (int argc, char **argv) -> std::optional<TBCfg> {
                 config.trace_en = true;
                 break;
             case 's':
+                config.split_endpoints = true;
+                break;
+            case 'p':
+                config.perfect_mapping = true;
                 config.split_endpoints = true;
                 break;
             case 'c':
@@ -295,7 +307,9 @@ void req_send (
         // Get a random enpoint that is not this current one.
         int possible_endpoints = config.split_endpoints ? NUM_ENDPOINTS / 2 : NUM_ENDPOINTS;
         int dest_endpoint = std::rand() % possible_endpoints;
-        if (config.split_endpoints)
+        if (config.perfect_mapping)
+            dest_endpoint = PERFECT_MAPPING_ADDR[endpoint_idx];
+        else if (config.split_endpoints)
             dest_endpoint += NUM_ENDPOINTS / 2;
         else if (dest_endpoint == endpoint_idx)
             dest_endpoint = dest_endpoint == NUM_ENDPOINTS - 1 ? 0 : dest_endpoint + 1;

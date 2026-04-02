@@ -7,6 +7,7 @@ ring-16:
 	fusesoc --cores-root . run --build --target tb_ring_16 tinynocs:src:dv-ring
 	build/tinynocs_src_dv-ring_0.0.1/tb_ring_16-verilator/Vring_16
 	build/tinynocs_src_dv-ring_0.0.1/tb_ring_16-verilator/Vring_16 --split-endpoints
+	build/tinynocs_src_dv-ring_0.0.1/tb_ring_16-verilator/Vring_16 --perfect-mapping
 	@echo "Built and ran a 16-endpoint ring network with basic params\n"
 
 ring-all: ring-16
