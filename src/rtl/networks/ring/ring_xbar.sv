@@ -11,8 +11,7 @@ Description:
 import packet_pkg::*;
 
 module ring_xbar #(
-    parameter int unsigned ENDPOINT_ADDR_START,
-    parameter int unsigned ENDPOINT_ADDR_STOP,
+    parameter int unsigned ENDPOINT_ID,
     parameter int NET_BUFFER_RX_DEPTH,
     parameter int EP_BUFFER_RX_DEPTH
 ) (
@@ -131,8 +130,7 @@ logic        xbarb_endpoint_stall_tx;
 logic        xbarb_endpoint_en_tx;
 net_packet_t xbarb_endpoint_packet_tx;
 ring_xbar_arbiter #(
-    .ENDPOINT_ADDR_START(ENDPOINT_ADDR_START),
-    .ENDPOINT_ADDR_STOP(ENDPOINT_ADDR_STOP)
+    .ENDPOINT_ID(ENDPOINT_ID)
 ) xbarb (
     .CLK(CLK),
     .nRST(nRST),
@@ -175,9 +173,5 @@ assign xbarb_net_stall_tx = net_stall_tx;
 assign xbarb_endpoint_en_rx = !endpoint_buffer_rx_empty;
 assign xbarb_endpoint_packet_rx = endpoint_buffer_rx_rdata;
 assign xbarb_endpoint_stall_tx = endpoint_stall_tx;
-
-always_comb begin : sanityChecks
-    assert (ENDPOINT_ADDR_START <= ENDPOINT_ADDR_STOP);
-end
 
 endmodule

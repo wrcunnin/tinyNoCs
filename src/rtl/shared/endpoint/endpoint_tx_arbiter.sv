@@ -10,7 +10,10 @@ Description:
 import packet_pkg::*;
 
 module endpoint_tx_arbiter #(
-    parameter int ENDPOINT_ADDR
+    parameter int ENDPOINT_ID_X,
+    parameter int ENDPOINT_ID_Y,
+    parameter int IS_RING = 0,
+    parameter int IS_MESH = 0
 ) (
     // Clock, async reset
     input logic CLK, nRST,
@@ -35,7 +38,7 @@ module endpoint_tx_arbiter #(
     input logic resp_en,
 
     // Return address of the packet
-    input addr_t resp_return_addr,
+    input endpoint_id_t [1:0] resp_return_id,
 
     // Packet information responder wants to send
     input packet_t resp_packet,
@@ -43,10 +46,10 @@ module endpoint_tx_arbiter #(
     ////////////////////////////////////////////////////////
     // To Network signals
     // Stalls requests/responses to network
-    input net_stall,
+    input logic net_stall,
 
     // Indicates we are sending a packet into the network
-    output net_en,
+    output logic net_en,
 
     // Packaged packet to send out to network
     output net_packet_t net_packet
@@ -55,6 +58,8 @@ module endpoint_tx_arbiter #(
 typedef enum logic [1:0] { EPTXARB_NONE, EPTXARB_REQ, EPTXARB_RESP } endpoint_tx_arbiter_lru_state_t;
 
 endpoint_tx_arbiter_lru_state_t lru, next_lru, selected;
+
+endpoint_id_t [1:0] dst_id;
 
 always_ff @( posedge CLK, negedge nRST ) begin : EPTXARB_LRU
     if (!nRST)
@@ -93,6 +98,8 @@ always_comb begin : packetCreation
     resp_stall = 1;
     net_en = 0;
     net_packet = '0;
+    net_packet.src_id[0] = endpoint_id_t'(ENDPOINT_ID_X);
+    net_packet.src_id[1] = endpoint_id_t'(ENDPOINT_ID_Y);
 
     // The requester has been selected
     // - We enable the network send signal
@@ -104,7 +111,7 @@ always_comb begin : packetCreation
         net_en = 1;
         req_stall = net_stall;
         net_packet.request = 1;
-        net_packet.start_addr = addr_t'(ENDPOINT_ADDR);
+        net_packet.dst_id = dst_id;
         net_packet.packet = req_packet;
     end
 
@@ -119,10 +126,30 @@ always_comb begin : packetCreation
         net_en = 1;
         resp_stall = net_stall;
         net_packet.request = 0;
-        net_packet.start_addr = resp_packet.addr;
+        net_packet.dst_id = resp_return_id;
         net_packet.packet = resp_packet;
-        net_packet.packet.addr = resp_return_addr;
     end
 end
+
+generate
+    if (IS_RING) begin
+        // HACK: Is this always going to be right? Need to have 2**power aligned number of endpoints...
+        //       I am the designer and I say this is okay! If you get upset about it,
+        //       please do not send your regards.
+        assign dst_id[0] = req_packet.addr[(ADDRESS_BITS-1):(ADDRESS_BITS-ENDPOINT_ID_BITS)];
+        assign dst_id[1] = 0;
+    end
+    else if (IS_MESH) begin
+        // TODO(wrcunnin): implement for mesh/torus
+        always_comb begin
+            assert(0);
+        end
+    end
+    else begin
+        always_comb begin
+            assert(0);
+        end
+    end
+endgenerate
 
 endmodule

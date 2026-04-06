@@ -19,7 +19,7 @@ module endpoint_rx_arbiter (
     output logic req_en,
 
     // Address to compare against when returning a response
-    output addr_t req_return_addr,
+    output endpoint_id_t [1:0] req_return_id,
 
     // Information to return to the request FIFO
     output packet_t req_packet,
@@ -33,7 +33,7 @@ module endpoint_rx_arbiter (
     output logic resp_en,
 
     // Address to insert when returning a response
-    output addr_t resp_return_addr,
+    output endpoint_id_t [1:0] resp_return_id,
 
     // Information to insert in the response FIFO
     output packet_t resp_packet,
@@ -53,27 +53,27 @@ module endpoint_rx_arbiter (
 always_comb begin : packetSelection
     req_en = 0;
     req_packet = '0;
-    req_return_addr = '0;
+    req_return_id = '0;
     resp_en = 0;
     resp_packet = '0;
-    resp_return_addr = '0;
+    resp_return_id = '0;
     net_stall = 1;
 
     if (net_en) begin
-        // If a packet is a request, it goes to the response FIFO
-        // - We are receiving data we requested/acknowledged
+        // If an incoming packet is a request, it goes to the response FIFO
+        // - We are receiving data from an external endpoint
         if (net_packet.request) begin
             resp_en = 1;
             resp_packet = net_packet.packet;
-            resp_return_addr = net_packet.start_addr;
+            resp_return_id = net_packet.src_id;
             net_stall = resp_stall;
         end
-        // If a packet is not a request, it goes to the request FIFO
+        // If an incoming packet is not a request, it goes to the request FIFO
         // - We are receiving data we requested/acknowledged
         else if (!net_packet.request) begin
             req_en = 1;
             req_packet = net_packet.packet;
-            req_return_addr = net_packet.start_addr;
+            req_return_id = net_packet.src_id;
             net_stall = req_stall;
         end
         else

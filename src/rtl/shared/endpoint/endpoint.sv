@@ -9,7 +9,7 @@ Description:
         ~ stores requests to network
     - endpoint_rx_buffer
         ~ stores requests from network
-    - return_addr_buffer
+    - return_id_buffer
         ~ stores return addresses for active requests from the network
     - rx_arbiter
         ~ manages which buffer a packet from the network goes to
@@ -23,7 +23,10 @@ import packet_pkg::*;
 module endpoint #(
     parameter int TX_BUFFER_DEPTH,
     parameter int RX_BUFFER_DEPTH,
-    parameter int ENDPOINT_ADDR
+    parameter int ENDPOINT_ID_X,
+    parameter int ENDPOINT_ID_Y,
+    parameter int IS_RING = 0,
+    parameter int IS_MESH = 0
 ) (
     // Clock, async reset
     input logic CLK, nRST,
@@ -192,53 +195,53 @@ fifo_basic #(
 );
 
 /************************************************/
-/* return_addr_buffer                           */
+/* return_id_buffer                           */
 /************************************************/
-logic                    return_addr_buffer_ren;
-logic                    return_addr_buffer_wen;
-logic [ADDRESS_BITS-1:0] return_addr_buffer_rdata;
-logic [ADDRESS_BITS-1:0] return_addr_buffer_wdata;
-logic                    return_addr_buffer_full;
-logic                    return_addr_buffer_empty;
+logic               return_id_buffer_ren;
+logic               return_id_buffer_wen;
+endpoint_id_t [1:0] return_id_buffer_rdata;
+endpoint_id_t [1:0] return_id_buffer_wdata;
+logic               return_id_buffer_full;
+logic               return_id_buffer_empty;
 
 fifo_basic #(
     .DEPTH(RX_BUFFER_DEPTH),
-    .DATA_WIDTH(ADDRESS_BITS)
-) return_addr_buffer (
+    .DATA_WIDTH(2*ENDPOINT_ID_BITS)
+) return_id_buffer (
     .CLK(CLK),
     .nRST(nRST),
-    .full(return_addr_buffer_full),
-    .empty(return_addr_buffer_empty),
-    .ren(return_addr_buffer_ren),
-    .rdata(return_addr_buffer_rdata),
-    .wen(return_addr_buffer_wen),
-    .wdata(return_addr_buffer_wdata)
+    .full(return_id_buffer_full),
+    .empty(return_id_buffer_empty),
+    .ren(return_id_buffer_ren),
+    .rdata(return_id_buffer_rdata),
+    .wen(return_id_buffer_wen),
+    .wdata(return_id_buffer_wdata)
 );
 
 
 /************************************************/
 /* rx_arbiter                                   */
 /************************************************/
-logic        rx_arbiter_req_stall;
-logic        rx_arbiter_req_en;
-addr_t       rx_arbiter_req_return_addr;
-packet_t     rx_arbiter_req_packet;
-logic        rx_arbiter_resp_stall;
-logic        rx_arbiter_resp_en;
-addr_t       rx_arbiter_resp_return_addr;
-packet_t     rx_arbiter_resp_packet;
-logic        rx_arbiter_net_en;
-logic        rx_arbiter_net_stall;
-net_packet_t rx_arbiter_net_packet;
+logic         rx_arbiter_req_stall;
+logic         rx_arbiter_req_en;
+addr_t        rx_arbiter_req_return_id;
+packet_t      rx_arbiter_req_packet;
+logic         rx_arbiter_resp_stall;
+logic         rx_arbiter_resp_en;
+endpoint_id_t [1:0] rx_arbiter_resp_return_id;
+packet_t      rx_arbiter_resp_packet;
+logic         rx_arbiter_net_en;
+logic         rx_arbiter_net_stall;
+net_packet_t  rx_arbiter_net_packet;
 
 endpoint_rx_arbiter rx_arbiter (
     .req_stall(rx_arbiter_req_stall),
     .req_en(rx_arbiter_req_en),
-    .req_return_addr(rx_arbiter_req_return_addr),
+    .req_return_id(rx_arbiter_req_return_id),
     .req_packet(rx_arbiter_req_packet),
     .resp_stall(rx_arbiter_resp_stall),
     .resp_en(rx_arbiter_resp_en),
-    .resp_return_addr(rx_arbiter_resp_return_addr),
+    .resp_return_id(rx_arbiter_resp_return_id),
     .resp_packet(rx_arbiter_resp_packet),
     .net_en(rx_arbiter_net_en),
     .net_stall(rx_arbiter_net_stall),
@@ -249,19 +252,21 @@ endpoint_rx_arbiter rx_arbiter (
 /************************************************/
 /* tx_arbiter                                   */
 /************************************************/
-logic        tx_arbiter_req_stall;
-logic        tx_arbiter_req_en;
-packet_t     tx_arbiter_req_packet;
-logic        tx_arbiter_resp_stall;
-logic        tx_arbiter_resp_en;
-addr_t       tx_arbiter_resp_return_addr;
-packet_t     tx_arbiter_resp_packet;
-logic        tx_arbiter_net_en;
-logic        tx_arbiter_net_stall;
-net_packet_t tx_arbiter_net_packet;
+logic         tx_arbiter_req_stall;
+logic         tx_arbiter_req_en;
+packet_t      tx_arbiter_req_packet;
+logic         tx_arbiter_resp_stall;
+logic         tx_arbiter_resp_en;
+endpoint_id_t [1:0] tx_arbiter_resp_return_id;
+packet_t      tx_arbiter_resp_packet;
+logic         tx_arbiter_net_en;
+logic         tx_arbiter_net_stall;
+net_packet_t  tx_arbiter_net_packet;
 
 endpoint_tx_arbiter #(
-    .ENDPOINT_ADDR(ENDPOINT_ADDR)
+    .ENDPOINT_ID_X(ENDPOINT_ID_X),
+    .ENDPOINT_ID_Y(ENDPOINT_ID_Y),
+    .IS_RING(1)
 ) tx_arbiter (
     .CLK(CLK),
     .nRST(nRST),
@@ -270,7 +275,7 @@ endpoint_tx_arbiter #(
     .req_packet(tx_arbiter_req_packet),
     .resp_stall(tx_arbiter_resp_stall),
     .resp_en(tx_arbiter_resp_en),
-    .resp_return_addr(tx_arbiter_resp_return_addr),
+    .resp_return_id(tx_arbiter_resp_return_id),
     .resp_packet(tx_arbiter_resp_packet),
     .net_en(tx_arbiter_net_en),
     .net_stall(tx_arbiter_net_stall),
@@ -303,9 +308,9 @@ assign endpoint_rx_buffer_net_comp_packet = resp_comp_packet;
 assign resp_en = endpoint_rx_buffer_net_en;
 assign resp_packet = endpoint_rx_buffer_net_packet;
 
-assign return_addr_buffer_ren = tx_arbiter_resp_en && !tx_arbiter_resp_stall;
-assign return_addr_buffer_wen = rx_arbiter_resp_en && !rx_arbiter_resp_stall;
-assign return_addr_buffer_wdata = rx_arbiter_resp_return_addr;
+assign return_id_buffer_ren = tx_arbiter_resp_en && !tx_arbiter_resp_stall;
+assign return_id_buffer_wen = rx_arbiter_resp_en && !rx_arbiter_resp_stall;
+assign return_id_buffer_wdata = rx_arbiter_resp_return_id;
 
 assign rx_arbiter_req_stall = 0;
 assign rx_arbiter_resp_stall = endpoint_rx_buffer_fifo_router_full;
@@ -320,7 +325,7 @@ assign net_rx_buffer_wdata = net_packet_rx;
 assign tx_arbiter_req_en = endpoint_tx_buffer_net_en;
 assign tx_arbiter_req_packet = endpoint_tx_buffer_net_packet;
 assign tx_arbiter_resp_en = endpoint_rx_buffer_req_comp;
-assign tx_arbiter_resp_return_addr = return_addr_buffer_rdata;
+assign tx_arbiter_resp_return_id = return_id_buffer_rdata;
 assign tx_arbiter_resp_packet = endpoint_rx_buffer_req_comp_packet;
 assign tx_arbiter_net_stall = net_stall_tx;
 assign net_en_tx = tx_arbiter_net_en;
@@ -328,8 +333,8 @@ assign net_packet_tx = tx_arbiter_net_packet;
 
 // Sanity checks
 always_comb begin
-    assert(return_addr_buffer_full == endpoint_rx_buffer_fifo_router_full);
-    assert(return_addr_buffer_empty == endpoint_rx_buffer_fifo_router_empty);
+    assert(return_id_buffer_full == endpoint_rx_buffer_fifo_router_full);
+    assert(return_id_buffer_empty == endpoint_rx_buffer_fifo_router_empty);
 end
 
 endmodule

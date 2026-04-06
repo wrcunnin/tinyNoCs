@@ -8,9 +8,10 @@ Description:
 
 */
 
+import packet_pkg::*;
+
 module ring_xbar_arbiter #(
-    parameter int unsigned ENDPOINT_ADDR_START,
-    parameter int unsigned ENDPOINT_ADDR_STOP
+    parameter int unsigned ENDPOINT_ID
 ) (
     // Clock, async reset
     input logic CLK, nRST,
@@ -75,7 +76,7 @@ end
 
 // Determines if the incoming network packet is intended for the endpoint
 logic net_dest_match;
-assign net_dest_match = net_en_rx && (ENDPOINT_ADDR_START <= net_packet_rx.packet.addr) && (net_packet_rx.packet.addr <= ENDPOINT_ADDR_STOP);
+assign net_dest_match = net_en_rx && (endpoint_id_t'(ENDPOINT_ID) == net_packet_rx.dst_id[0]);
 
 always_comb begin : packetSelection
     selected = RXBAR_NONE;

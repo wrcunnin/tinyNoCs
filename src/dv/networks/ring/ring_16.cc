@@ -24,7 +24,6 @@
 #define ENDPOINT_GRAN ( 0x80000000 >> (( (int) ceil(log2f( (float) NUM_ENDPOINTS )) ) - 1) )
 #define ENDPOINT_MASK (~(0xFFFFFFFF >> (( (int) ceil(log2f( (float) NUM_ENDPOINTS )) ))))
 #define TOTAL_REQUESTS 10000
-#define DEBUG 0
 
 #define GET_LOGIC(logic, idx) ((logic >> (idx)) & 0x1) 
 #define GET_ADDR(addr, idx) ( ((addr[idx / 2]) >> ((idx % 2) * 32)) & 0xFFFFFFFF )
@@ -53,6 +52,7 @@ struct TBCfg {
     bool perfect_mapping;
     bool split_endpoints;
     unsigned long cycle_limit;
+    bool debug;
     DUT_TYPE *dutp;
     VerilatedFstC *tracep;
 };
@@ -78,6 +78,7 @@ const TBCfg default_config {
     .perfect_mapping = false,
     .split_endpoints = false,
     .cycle_limit = 1000000,
+    .debug = false,
     .dutp = NULL,
     .tracep = NULL
 };
@@ -165,6 +166,7 @@ auto parse_cli (int argc, char **argv) -> std::optional<TBCfg> {
         {"split-endpoints", no_argument,        0, 's'},
         {"perfect-mapping", no_argument,        0, 'p'},
         {"cycle-limit",     required_argument,  0, 'c'},
+        {"debug",           required_argument,  0, 'd'},
         {"help",            no_argument,        0, 'h'},
         {0, 0, 0, 0}
     };
@@ -174,7 +176,7 @@ auto parse_cli (int argc, char **argv) -> std::optional<TBCfg> {
     char *endp = NULL;
 
     for(;;) {
-        int c = getopt_long(argc, argv, "t:s:p:c:h", long_options, &option_index);
+        int c = getopt_long(argc, argv, "t:s:p:c:d:h", long_options, &option_index);
         if(c == -1) {
             break;
         }
@@ -208,6 +210,9 @@ auto parse_cli (int argc, char **argv) -> std::optional<TBCfg> {
                         << " did not have a valid base" << std::endl;
                     return {};
                 }
+                break;
+            case 'd':
+                config.debug = true;
                 break;
         }
     }
@@ -319,7 +324,7 @@ void req_send (
         uint32_t addr = ENDPOINT_START_ADDRS[dest_endpoint] + ((r1 + r2) % ENDPOINT_GRAN);
         uint64_t payload = (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2));
 
-        if (DEBUG) {
+        if (config.debug) {
             std::cout << "[INFO] At Cycle " << cycles << ", Creating Request to FIFO Router in Endpoint " << endpoint_idx << std::endl;
             std::cout << "       req_en             : " << (ren || wen) << std::endl;
             std::cout << "       req_packet.wen     : " << wen << std::endl;
@@ -361,7 +366,7 @@ void req_comp (
         netPacket packet = requestBufferQueue[endpoint_idx].front();
         requestBufferQueue[endpoint_idx].pop_front();
 
-        if (DEBUG) {
+        if (config.debug) {
             std::cout << "[INFO] At Cycle " << cycles << ", Committing Request from FIFO Router in Endpoint " << endpoint_idx << std::endl;
             std::cout << "       req_addr_comp    : " << comp_wen << std::endl;
             std::cout << "       expected addr    : " << packet.wen << std::endl;
@@ -391,6 +396,12 @@ void resp_send (
         uint32_t req_addr = GET_PACKET_ADDR(dut.resp_packet, endpoint_idx);
         uint64_t req_payload = GET_PACKET_PAYLOAD(dut.resp_packet, endpoint_idx);
 
+        if (config.debug) {
+            std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
+            std::cout << "       wen          : " << req_wen << std::endl;
+            std::cout << "       addr         : 0x" << std::hex << req_addr << std::dec << std::endl;
+            std::cout << "       payload      : 0x" << std::hex << req_payload << std::dec << std::endl;
+        }
         assert((req_addr & ENDPOINT_MASK) == (ENDPOINT_START_ADDRS[endpoint_idx]));
 
         // iterate through the expected response queue, make sure that the packet we are receiving
@@ -413,12 +424,8 @@ void resp_send (
         SET_PACKET_ID(dut.resp_comp_packet, req_id, endpoint_idx);
         SET_PACKET_PAYLOAD(dut.resp_comp_packet, packet.payload_comp, endpoint_idx);
 
-        if (DEBUG) {
-            std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
+        if (config.debug) {
             std::cout << "       start_addr   : 0x" << std::hex << packet.start_addr << std::dec << std::endl;
-            std::cout << "       wen          : " << req_wen << std::endl;
-            std::cout << "       addr         : 0x" << std::hex << req_addr << std::dec << std::endl;
-            std::cout << "       payload      : 0x" << std::hex << req_payload << std::dec << std::endl;
             std::cout << "       payload_comp : 0x" << std::hex << packet.payload_comp << std::dec << "\n" << std::endl;
         }
     }
