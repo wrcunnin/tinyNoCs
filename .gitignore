@@ -6,3 +6,9 @@ build/**
 
 # vscode junk
 .vscode/**
+
+# any verilog directories for synthesis
+verilog*/**
+
+# any LibreLane files
+scripts/**/runs/**

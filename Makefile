@@ -69,4 +69,7 @@ fifo-router-all: fifo-router fifo-router-10 fifo-router-64
 # Utility
 ###################################
 clean:
-	rm -rf build waveform.fst.hier
+	rm -rf build waveform.fst.hier waveform.fst
+
+clean-synth: clean
+	rm -rf scripts/**/runs

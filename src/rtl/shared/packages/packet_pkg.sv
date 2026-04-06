@@ -17,7 +17,11 @@ parameter int PAYLOAD_BITS = 64;
 //  This needs to be equal to the max DEPTH_BITS of all
 //  the FIFO router instances. Maybe we just set this to
 //  32 for simulation and fine tune it for synthesis?
+`ifndef SYNTHESIS
 parameter int ID_BITS = 32;
+`else
+parameter int ID_BITS = 4;
+`endif
 
 typedef logic [ADDRESS_BITS-1:0] addr_t;
 
