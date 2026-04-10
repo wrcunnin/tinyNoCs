@@ -12,8 +12,8 @@ import packet_pkg::*;
 
 module ring_xbar #(
     parameter int unsigned ENDPOINT_ID,
-    parameter int NET_BUFFER_RX_DEPTH,
-    parameter int EP_BUFFER_RX_DEPTH
+    parameter int NET_BUFFER_RX_DEPTH = 8,
+    parameter int EP_BUFFER_RX_DEPTH = 8
 ) (
     // Clock, async reset
     input logic CLK, nRST,
