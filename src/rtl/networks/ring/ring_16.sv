@@ -4,7 +4,7 @@ Author: William Cunningham
 Date  : 03/21/2026
 
 Description:
-    2-endpoint ring network
+    16-endpoint ring network
 
 */
 
