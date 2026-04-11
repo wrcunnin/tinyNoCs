@@ -1,7 +1,7 @@
 module mesh_4x4 #(
-    parameter int unsigned TX_BUFFER_DEPTH = 4,
-    parameter int unsigned RX_BUFFER_DEPTH = 4,
-    parameter int unsigned BUFFER_RX_DEPTH = 32
+    parameter int unsigned TX_BUFFER_DEPTH = 8,
+    parameter int unsigned RX_BUFFER_DEPTH = 8,
+    parameter int unsigned BUFFER_RX_DEPTH = 16
 ) (
     // Clock, async reset
     input logic CLK, nRST,

@@ -349,7 +349,7 @@ mesh_xbar #( \
     .POS_Y(yid), \
     .MAX_X(max_x), \
     .MAX_Y(max_y), \
-    .PREFER_VERTICAL(prefer_vertical), \
+    .PREFER_VERTICAL(1), \
     .BUFFER_RX_DEPTH(BUFFER_RX_DEPTH) \
 ) mesh_xbar_``xid``_``yid`` ( \
     .CLK(CLK), \

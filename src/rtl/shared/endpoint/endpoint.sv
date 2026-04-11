@@ -205,7 +205,7 @@ logic               return_id_buffer_full;
 logic               return_id_buffer_empty;
 
 fifo_basic #(
-    .DEPTH(2*RX_BUFFER_DEPTH),
+    .DEPTH(RX_BUFFER_DEPTH),
     .DATA_WIDTH(2*ENDPOINT_ID_BITS)
 ) return_id_buffer (
     .CLK(CLK),
