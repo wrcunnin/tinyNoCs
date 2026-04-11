@@ -15,6 +15,20 @@ ring-all: ring-16
 
 
 ###################################
+# Mesh Test Benches
+###################################
+mesh-4x4:
+	fusesoc --cores-root . run --build --target tb_mesh_4x4 tinynocs:src:dv-mesh
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh_4x4
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh_4x4 --split-endpoints
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh_4x4 --perfect-mapping
+	@echo "Built and ran a 16-endpoint 4x4 mesh network with basic params\n"
+
+mesh-all: mesh-4x4
+	@echo "Built and ran all Mesh Network test benches\n"
+
+
+###################################
 # Endpoint Test Benches
 ###################################
 endpoint:

@@ -131,19 +131,20 @@ always_comb begin : packetCreation
     end
 end
 
+endpoint_id_t endpoint_idx;
+assign endpoint_idx = req_packet.addr[(ADDRESS_BITS-1):(ADDRESS_BITS-ENDPOINT_ID_BITS)];
+
 generate
     if (IS_RING) begin
         // HACK: Is this always going to be right? Need to have 2**power aligned number of endpoints...
         //       I am the designer and I say this is okay! If you get upset about it,
         //       please do not send your regards.
-        assign dst_id[0] = req_packet.addr[(ADDRESS_BITS-1):(ADDRESS_BITS-ENDPOINT_ID_BITS)];
+        assign dst_id[0] = endpoint_idx;
         assign dst_id[1] = 0;
     end
     else if (IS_MESH) begin
-        // TODO(wrcunnin): implement for mesh/torus
-        always_comb begin
-            assert(0);
-        end
+        assign dst_id[0] = MESH_4x4_ENDPOINTS[endpoint_idx][0];
+        assign dst_id[1] = MESH_4x4_ENDPOINTS[endpoint_idx][1];
     end
     else begin
         always_comb begin

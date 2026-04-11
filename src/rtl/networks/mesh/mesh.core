@@ -1,0 +1,28 @@
+CAPI=2:
+name: tinynocs:src:rtl-mesh:0.0.1
+description: RTL modules for Mesh Networks
+
+filesets:
+  mesh_xbar:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - mesh_xbar.sv
+      - mesh_xbar_arbiter.sv
+      - mesh_xbar_arbiter_in_ctrl.sv
+      - mesh_xbar_arbiter_out_ctrl.sv
+    file_type: systemVerilogSource
+
+  mesh_4x4:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - mesh_4x4.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+      - mesh_xbar
+      - mesh_4x4
+

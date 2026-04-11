@@ -181,7 +181,7 @@ logic                       net_rx_buffer_full;
 logic                       net_rx_buffer_empty;
 
 fifo_basic #(
-    .DEPTH(RX_BUFFER_DEPTH),
+    .DEPTH(2*RX_BUFFER_DEPTH),
     .DATA_WIDTH(NET_PACKET_BITS)
 ) net_rx_buffer (
     .CLK(CLK),
@@ -205,7 +205,7 @@ logic               return_id_buffer_full;
 logic               return_id_buffer_empty;
 
 fifo_basic #(
-    .DEPTH(RX_BUFFER_DEPTH),
+    .DEPTH(2*RX_BUFFER_DEPTH),
     .DATA_WIDTH(2*ENDPOINT_ID_BITS)
 ) return_id_buffer (
     .CLK(CLK),
@@ -266,7 +266,8 @@ net_packet_t  tx_arbiter_net_packet;
 endpoint_tx_arbiter #(
     .ENDPOINT_ID_X(ENDPOINT_ID_X),
     .ENDPOINT_ID_Y(ENDPOINT_ID_Y),
-    .IS_RING(1)
+    .IS_RING(IS_RING),
+    .IS_MESH(IS_MESH)
 ) tx_arbiter (
     .CLK(CLK),
     .nRST(nRST),

@@ -1,0 +1,42 @@
+CAPI=2:
+name: tinynocs:src:dv-mesh:0.0.1
+description: DV modules for Mesh Networks
+
+filesets:
+  mesh_4x4:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+      - tinynocs:src:rtl-mesh:0.0.1
+    files:
+      - mesh_4x4.cc : {file_type: cppSource}
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    default_tool: verilator
+    tools:
+      verilator:
+        verilator_options:
+          - --assert
+          - -Wno-WIDTHCONCAT
+          - -Wno-SYMRSVDWORD
+          - -Wno-ENUMVALUE
+          - -Wno-TIMESCALEMOD
+          - -Wno-lint
+          - --trace
+          - --trace-fst
+          - --trace-structs
+          - --trace-threads 4
+          - --threads 4
+          - -CFLAGS "-std=c++23"
+
+  tb_mesh_4x4:
+    <<: *default
+    toplevel: mesh_4x4
+    filesets_append:
+      - mesh_4x4
+    tools:
+      verilator:
+        verilator_options_append:
+          - -GTX_BUFFER_DEPTH=8
+          - -GRX_BUFFER_DEPTH=8

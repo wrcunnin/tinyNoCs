@@ -38,6 +38,34 @@ typedef logic [ID_BITS-1:0] id_t;
 
 typedef logic [ENDPOINT_ID_BITS-1:0] endpoint_id_t;
 
+// This is so fucking disgusting
+logic [0:NUM_ENDPOINTS-1][0:1][ENDPOINT_ID_BITS-1:0] MESH_4x4_ENDPOINTS = {
+    // {x_idx, y_idx}
+    // West side, ID's 0 thru 3
+    {4'd0, 4'd1},
+    {4'd0, 4'd2},
+    {4'd0, 4'd3},
+    {4'd0, 4'd4},
+
+    // South side, ID's 4 thru 7
+    {4'd1, 4'd5},
+    {4'd2, 4'd5},
+    {4'd3, 4'd5},
+    {4'd4, 4'd5},
+
+    // East side,  ID's 8 through 11
+    {4'd5, 4'd1},
+    {4'd5, 4'd2},
+    {4'd5, 4'd3},
+    {4'd5, 4'd4},
+
+    // North side, ID's 12 thru 15
+    {4'd1, 4'd0},
+    {4'd2, 4'd0},
+    {4'd3, 4'd0},
+    {4'd4, 4'd0}
+};
+
 // Used by FIFO routers to prepackage data, i.e. before going out
 // onto the network, or to initialize requests
 typedef struct packed {
@@ -81,7 +109,9 @@ typedef struct packed {
 parameter NET_PACKET_BITS = $bits(net_packet_t);
 
 
-
+////////////////////////////////////////////////////////
+// Ring defines
+////////////////////////////////////////////////////////
 `define CREATE_ENDPOINT_RING_XBAR(id) \
 logic        endpoint_``id``_req_full; \
 logic        endpoint_``id``_req_empty; \
@@ -194,6 +224,249 @@ assign rxbar_``id``_net_stall_tx = rxbar_``tx_id``_net_stall_rx; \
 assign rxbar_``id``_endpoint_en_rx = endpoint_``id``_net_en_tx; \
 assign rxbar_``id``_endpoint_packet_rx = endpoint_``id``_net_packet_tx; \
 assign rxbar_``id``_endpoint_stall_tx = endpoint_``id``_net_stall_rx;
+////////////////////////////////////////////////////////
+// End Ring Defines
+////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////
+// Mesh defines
+////////////////////////////////////////////////////////
+`define CREATE_MESH_XBARB_CTRL(direction) \
+logic        ``direction``_mesh_xbarb_in_ctrl_net_stall_rx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_net_en_rx; \
+net_packet_t ``direction``_mesh_xbarb_in_ctrl_net_packet_rx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_north_en_rx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_south_en_rx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_east_en_rx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_west_en_rx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_north_stall_tx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_south_stall_tx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_east_stall_tx; \
+logic        ``direction``_mesh_xbarb_in_ctrl_west_stall_tx; \
+mesh_xbar_arbiter_in_ctrl #( \
+    .POS_X(POS_X), \
+    .POS_Y(POS_Y), \
+    .MAX_X(MAX_X), \
+    .MAX_Y(MAX_Y), \
+    .PREFER_VERTICAL(PREFER_VERTICAL) \
+) ``direction``_mesh_xbarb_in_ctrl ( \
+    .net_stall_rx(``direction``_mesh_xbarb_in_ctrl_net_stall_rx), \
+    .net_en_rx(``direction``_mesh_xbarb_in_ctrl_net_en_rx), \
+    .net_packet_rx(``direction``_mesh_xbarb_in_ctrl_net_packet_rx), \
+    .north_en_rx(``direction``_mesh_xbarb_in_ctrl_north_en_rx), \
+    .south_en_rx(``direction``_mesh_xbarb_in_ctrl_south_en_rx), \
+    .east_en_rx(``direction``_mesh_xbarb_in_ctrl_east_en_rx), \
+    .west_en_rx(``direction``_mesh_xbarb_in_ctrl_west_en_rx), \
+    .north_stall_tx(``direction``_mesh_xbarb_in_ctrl_north_stall_tx), \
+    .south_stall_tx(``direction``_mesh_xbarb_in_ctrl_south_stall_tx), \
+    .east_stall_tx(``direction``_mesh_xbarb_in_ctrl_east_stall_tx), \
+    .west_stall_tx(``direction``_mesh_xbarb_in_ctrl_west_stall_tx) \
+); \
+logic              ``direction``_mesh_xbarb_out_ctrl_net_stall_tx; \
+logic              ``direction``_mesh_xbarb_out_ctrl_net_en_tx; \
+net_packet_t       ``direction``_mesh_xbarb_out_ctrl_net_packet_tx; \
+logic        [2:0] ``direction``_mesh_xbarb_out_ctrl_net_stall_rx; \
+logic        [2:0] ``direction``_mesh_xbarb_out_ctrl_net_en_rx; \
+net_packet_t [2:0] ``direction``_mesh_xbarb_out_ctrl_net_packet_rx; \
+mesh_xbar_arbiter_out_ctrl ``direction``_mesh_xbarb_out_ctrl ( \
+    .CLK(CLK), \
+    .nRST(nRST), \
+    .net_stall_tx(``direction``_mesh_xbarb_out_ctrl_net_stall_tx), \
+    .net_en_tx(``direction``_mesh_xbarb_out_ctrl_net_en_tx), \
+    .net_packet_tx(``direction``_mesh_xbarb_out_ctrl_net_packet_tx), \
+    .net_stall_rx(``direction``_mesh_xbarb_out_ctrl_net_stall_rx), \
+    .net_en_rx(``direction``_mesh_xbarb_out_ctrl_net_en_rx), \
+    .net_packet_rx(``direction``_mesh_xbarb_out_ctrl_net_packet_rx) \
+);
+
+`define CONNECT_MESH_XBARB_CTRL_IO(direction) \
+assign ``direction``_mesh_xbarb_out_ctrl_net_stall_tx = ``direction``_stall_tx; \
+assign ``direction``_en_tx = ``direction``_mesh_xbarb_out_ctrl_net_en_tx; \
+assign ``direction``_packet_tx = ``direction``_mesh_xbarb_out_ctrl_net_packet_tx; \
+assign ``direction``_stall_rx = ``direction``_mesh_xbarb_in_ctrl_net_stall_rx; \
+assign ``direction``_mesh_xbarb_in_ctrl_net_en_rx = ``direction``_en_rx; \
+assign ``direction``_mesh_xbarb_in_ctrl_net_packet_rx = ``direction``_packet_rx;
+
+`define CONNECT_MESH_XBARB_CTRL_INTERNAL(direction, dir0, dir1, dir2) \
+assign ``direction``_mesh_xbarb_in_ctrl_``direction``_stall_tx = 1; \
+assign ``direction``_mesh_xbarb_in_ctrl_``dir0``_stall_tx  = ``dir0``_mesh_xbarb_out_ctrl_net_stall_rx[2]; \
+assign ``direction``_mesh_xbarb_in_ctrl_``dir1``_stall_tx = ``dir1``_mesh_xbarb_out_ctrl_net_stall_rx[1]; \
+assign ``direction``_mesh_xbarb_in_ctrl_``dir2``_stall_tx  = ``dir2``_mesh_xbarb_out_ctrl_net_stall_rx[0]; \
+assign ``direction``_mesh_xbarb_out_ctrl_net_en_rx[0] = ``dir0``_mesh_xbarb_in_ctrl_``direction``_en_rx; \
+assign ``direction``_mesh_xbarb_out_ctrl_net_en_rx[1] = ``dir1``_mesh_xbarb_in_ctrl_``direction``_en_rx; \
+assign ``direction``_mesh_xbarb_out_ctrl_net_en_rx[2] = ``dir2``_mesh_xbarb_in_ctrl_``direction``_en_rx; \
+assign ``direction``_mesh_xbarb_out_ctrl_net_packet_rx[0] = ``dir0``_packet_rx; \
+assign ``direction``_mesh_xbarb_out_ctrl_net_packet_rx[1] = ``dir1``_packet_rx; \
+assign ``direction``_mesh_xbarb_out_ctrl_net_packet_rx[2] = ``dir2``_packet_rx;
+
+`define CREATE_MESH_XBAR_IO(direction) \
+    input logic ``direction``_stall_tx, \
+    output logic ``direction``_en_tx, \
+    output net_packet_t ``direction``_packet_tx, \
+    output logic ``direction``_stall_rx, \
+    input logic ``direction``_en_rx, \
+    input net_packet_t ``direction``_packet_rx
+
+`define CONNECT_MESH_XBAR_INTERNALS(direction) \
+assign ``direction``_buffer_rx_ren = !(mesh_xbarb_``direction``_stall_rx); \
+assign mesh_xbarb_``direction``_en_rx = !(``direction``_buffer_rx_empty); \
+assign mesh_xbarb_``direction``_packet_rx = ``direction``_buffer_rx_rdata; \
+assign ``direction``_stall_rx = ``direction``_buffer_rx_full; \
+assign ``direction``_buffer_rx_wdata = ``direction``_packet_rx; \
+assign ``direction``_buffer_rx_wen = ``direction``_en_rx; \
+assign mesh_xbarb_``direction``_stall_tx = ``direction``_stall_tx; \
+assign ``direction``_en_tx = mesh_xbarb_``direction``_en_tx; \
+assign ``direction``_packet_tx = mesh_xbarb_``direction``_packet_tx;
+
+`define CREATE_MESH_XBAR(xid, yid, max_x, max_y, prefer_vertical) \
+logic        mesh_xbar_``xid``_``yid``_north_stall_tx; \
+logic        mesh_xbar_``xid``_``yid``_north_en_tx; \
+net_packet_t mesh_xbar_``xid``_``yid``_north_packet_tx; \
+logic        mesh_xbar_``xid``_``yid``_north_stall_rx; \
+logic        mesh_xbar_``xid``_``yid``_north_en_rx; \
+net_packet_t mesh_xbar_``xid``_``yid``_north_packet_rx; \
+logic        mesh_xbar_``xid``_``yid``_south_stall_tx; \
+logic        mesh_xbar_``xid``_``yid``_south_en_tx; \
+net_packet_t mesh_xbar_``xid``_``yid``_south_packet_tx; \
+logic        mesh_xbar_``xid``_``yid``_south_stall_rx; \
+logic        mesh_xbar_``xid``_``yid``_south_en_rx; \
+net_packet_t mesh_xbar_``xid``_``yid``_south_packet_rx; \
+logic        mesh_xbar_``xid``_``yid``_east_stall_tx; \
+logic        mesh_xbar_``xid``_``yid``_east_en_tx; \
+net_packet_t mesh_xbar_``xid``_``yid``_east_packet_tx; \
+logic        mesh_xbar_``xid``_``yid``_east_stall_rx; \
+logic        mesh_xbar_``xid``_``yid``_east_en_rx; \
+net_packet_t mesh_xbar_``xid``_``yid``_east_packet_rx; \
+logic        mesh_xbar_``xid``_``yid``_west_stall_tx; \
+logic        mesh_xbar_``xid``_``yid``_west_en_tx; \
+net_packet_t mesh_xbar_``xid``_``yid``_west_packet_tx; \
+logic        mesh_xbar_``xid``_``yid``_west_stall_rx; \
+logic        mesh_xbar_``xid``_``yid``_west_en_rx; \
+net_packet_t mesh_xbar_``xid``_``yid``_west_packet_rx; \
+mesh_xbar #( \
+    .POS_X(xid), \
+    .POS_Y(yid), \
+    .MAX_X(max_x), \
+    .MAX_Y(max_y), \
+    .PREFER_VERTICAL(prefer_vertical), \
+    .BUFFER_RX_DEPTH(BUFFER_RX_DEPTH) \
+) mesh_xbar_``xid``_``yid`` ( \
+    .CLK(CLK), \
+    .nRST(nRST), \
+    .north_stall_tx(mesh_xbar_``xid``_``yid``_north_stall_tx), \
+    .north_en_tx(mesh_xbar_``xid``_``yid``_north_en_tx), \
+    .north_packet_tx(mesh_xbar_``xid``_``yid``_north_packet_tx), \
+    .north_stall_rx(mesh_xbar_``xid``_``yid``_north_stall_rx), \
+    .north_en_rx(mesh_xbar_``xid``_``yid``_north_en_rx), \
+    .north_packet_rx(mesh_xbar_``xid``_``yid``_north_packet_rx), \
+    .south_stall_tx(mesh_xbar_``xid``_``yid``_south_stall_tx), \
+    .south_en_tx(mesh_xbar_``xid``_``yid``_south_en_tx), \
+    .south_packet_tx(mesh_xbar_``xid``_``yid``_south_packet_tx), \
+    .south_stall_rx(mesh_xbar_``xid``_``yid``_south_stall_rx), \
+    .south_en_rx(mesh_xbar_``xid``_``yid``_south_en_rx), \
+    .south_packet_rx(mesh_xbar_``xid``_``yid``_south_packet_rx), \
+    .east_stall_tx(mesh_xbar_``xid``_``yid``_east_stall_tx), \
+    .east_en_tx(mesh_xbar_``xid``_``yid``_east_en_tx), \
+    .east_packet_tx(mesh_xbar_``xid``_``yid``_east_packet_tx), \
+    .east_stall_rx(mesh_xbar_``xid``_``yid``_east_stall_rx), \
+    .east_en_rx(mesh_xbar_``xid``_``yid``_east_en_rx), \
+    .east_packet_rx(mesh_xbar_``xid``_``yid``_east_packet_rx), \
+    .west_stall_tx(mesh_xbar_``xid``_``yid``_west_stall_tx), \
+    .west_en_tx(mesh_xbar_``xid``_``yid``_west_en_tx), \
+    .west_packet_tx(mesh_xbar_``xid``_``yid``_west_packet_tx), \
+    .west_stall_rx(mesh_xbar_``xid``_``yid``_west_stall_rx), \
+    .west_en_rx(mesh_xbar_``xid``_``yid``_west_en_rx), \
+    .west_packet_rx(mesh_xbar_``xid``_``yid``_west_packet_rx) \
+);
+
+`define CREATE_ENDPOINT_MESH(id, xid, yid) \
+logic        endpoint_``id``_req_full; \
+logic        endpoint_``id``_req_empty; \
+logic        endpoint_``id``_req_en; \
+packet_t     endpoint_``id``_req_packet; \
+logic        endpoint_``id``_req_comp_stall; \
+logic        endpoint_``id``_req_comp_en; \
+packet_t     endpoint_``id``_req_comp_packet; \
+logic        endpoint_``id``_resp_full; \
+logic        endpoint_``id``_resp_empty; \
+logic        endpoint_``id``_resp_stall; \
+logic        endpoint_``id``_resp_en; \
+packet_t     endpoint_``id``_resp_packet; \
+logic        endpoint_``id``_resp_comp_en; \
+addr_t       endpoint_``id``_resp_comp_return_addr; \
+packet_t     endpoint_``id``_resp_comp_packet; \
+logic        endpoint_``id``_net_stall_tx; \
+logic        endpoint_``id``_net_en_tx; \
+net_packet_t endpoint_``id``_net_packet_tx; \
+logic        endpoint_``id``_net_stall_rx; \
+logic        endpoint_``id``_net_en_rx; \
+net_packet_t endpoint_``id``_net_packet_rx; \
+generate \
+endpoint #( \
+    .TX_BUFFER_DEPTH(TX_BUFFER_DEPTH), \
+    .RX_BUFFER_DEPTH(RX_BUFFER_DEPTH), \
+    .ENDPOINT_ID_X(xid), \
+    .ENDPOINT_ID_Y(yid), \
+    .IS_MESH(1) \
+) endpoint_``id`` ( \
+    .CLK(CLK), \
+    .nRST(nRST), \
+    .req_full(endpoint_``id``_req_full), \
+    .req_empty(endpoint_``id``_req_empty), \
+    .req_en(endpoint_``id``_req_en), \
+    .req_packet(endpoint_``id``_req_packet), \
+    .req_comp_stall(endpoint_``id``_req_comp_stall), \
+    .req_comp_en(endpoint_``id``_req_comp_en), \
+    .req_comp_packet(endpoint_``id``_req_comp_packet), \
+    .resp_full(endpoint_``id``_resp_full), \
+    .resp_empty(endpoint_``id``_resp_empty), \
+    .resp_stall(endpoint_``id``_resp_stall), \
+    .resp_en(endpoint_``id``_resp_en), \
+    .resp_packet(endpoint_``id``_resp_packet), \
+    .resp_comp_en(endpoint_``id``_resp_comp_en), \
+    .resp_comp_return_addr(endpoint_``id``_resp_comp_return_addr), \
+    .resp_comp_packet(endpoint_``id``_resp_comp_packet), \
+    .net_stall_tx(endpoint_``id``_net_stall_tx), \
+    .net_en_tx(endpoint_``id``_net_en_tx), \
+    .net_packet_tx(endpoint_``id``_net_packet_tx), \
+    .net_stall_rx(endpoint_``id``_net_stall_rx), \
+    .net_en_rx(endpoint_``id``_net_en_rx), \
+    .net_packet_rx(endpoint_``id``_net_packet_rx) \
+); \
+endgenerate \
+assign req_full[id] = endpoint_``id``_req_full; \
+assign req_empty[id] = endpoint_``id``_req_empty; \
+assign req_comp_en[id] = endpoint_``id``_req_comp_en; \
+assign req_comp_packet[id] = endpoint_``id``_req_comp_packet; \
+assign resp_full[id] = endpoint_``id``_resp_full; \
+assign resp_empty[id] = endpoint_``id``_resp_empty; \
+assign resp_packet[id] = endpoint_``id``_resp_packet; \
+assign resp_en[id] = endpoint_``id``_resp_en; \
+assign endpoint_``id``_req_en = req_en[id]; \
+assign endpoint_``id``_req_packet = req_packet[id]; \
+assign endpoint_``id``_req_comp_stall = req_comp_stall[id]; \
+assign endpoint_``id``_resp_stall = resp_stall[id]; \
+assign endpoint_``id``_resp_comp_en = resp_comp_en[id]; \
+assign endpoint_``id``_resp_comp_return_addr = resp_comp_return_addr[id]; \
+assign endpoint_``id``_resp_comp_packet = resp_comp_packet[id];
+
+`define CONNECT_MESH_XBARS(xid, yid, net_name, in_direction, out_direction) \
+assign mesh_xbar_``xid``_``yid``_``in_direction``_stall_tx = ``net_name``_``out_direction``_stall_rx; \
+assign mesh_xbar_``xid``_``yid``_``in_direction``_en_rx = ``net_name``_``out_direction``_en_tx; \
+assign mesh_xbar_``xid``_``yid``_``in_direction``_packet_rx = ``net_name``_``out_direction``_packet_tx;
+
+`define CONNECT_MESH_XBAR_TO_ENDPOINT(xid, yid, net_name, direction) \
+assign mesh_xbar_``xid``_``yid``_``direction``_stall_tx = ``net_name``_stall_rx; \
+assign mesh_xbar_``xid``_``yid``_``direction``_en_rx = ``net_name``_en_tx; \
+assign mesh_xbar_``xid``_``yid``_``direction``_packet_rx = ``net_name``_packet_tx; \
+assign ``net_name``_stall_tx = mesh_xbar_``xid``_``yid``_``direction``_stall_rx; \
+assign ``net_name``_en_rx = mesh_xbar_``xid``_``yid``_``direction``_en_tx; \
+assign ``net_name``_packet_rx = mesh_xbar_``xid``_``yid``_``direction``_packet_tx;
+////////////////////////////////////////////////////////
+// End Mesh Defines
+////////////////////////////////////////////////////////
+
 
 
 endpackage
