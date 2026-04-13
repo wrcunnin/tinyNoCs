@@ -66,6 +66,33 @@ logic [0:NUM_ENDPOINTS-1][0:1][ENDPOINT_ID_BITS-1:0] MESH_4x4_ENDPOINTS = {
     {4'd4, 4'd0}
 };
 
+logic [0:NUM_ENDPOINTS-1][0:1][ENDPOINT_ID_BITS-1:0] MESH_5x3_ENDPOINTS = {
+    // {x_idx, y_idx}
+    // West side, ID's 0 thru 4
+    {4'd0, 4'd1},
+    {4'd0, 4'd2},
+    {4'd0, 4'd3},
+    {4'd0, 4'd4},
+    {4'd0, 4'd5},
+
+    // South side, ID's 5 thru 7
+    {4'd1, 4'd6},
+    {4'd2, 4'd6},
+    {4'd3, 4'd6},
+
+    // East side,  ID's 8 through 12
+    {4'd4, 4'd1},
+    {4'd4, 4'd2},
+    {4'd4, 4'd3},
+    {4'd4, 4'd4},
+    {4'd4, 4'd5},
+
+    // North side, ID's 13 thru 15
+    {4'd1, 4'd0},
+    {4'd2, 4'd0},
+    {4'd3, 4'd0}
+};
+
 // Used by FIFO routers to prepackage data, i.e. before going out
 // onto the network, or to initialize requests
 typedef struct packed {

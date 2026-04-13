@@ -15,10 +15,10 @@
 
 #include "verilated.h"
 #include "verilated_fst_c.h"
-#include "Vmesh_4x4.h"
+#include "Vmesh.h"
 
 #define TRACE_NAME "waveform.fst"
-#define DUT_TYPE Vmesh_4x4
+#define DUT_TYPE Vmesh
 #define NETWORK_STYLE "Mesh"
 #define NUM_ENDPOINTS 16
 #define ENDPOINT_GRAN ( 0x80000000 >> (( (int) ceil(log2f( (float) NUM_ENDPOINTS )) ) - 1) )
@@ -152,7 +152,7 @@ void print_config (TBCfg& config) {
 }
 
 void print_help () {
-    std::cerr << "Usage: ./Vmesh_4x4 [flags...]" << std::endl;
+    std::cerr << "Usage: ./Vmesh [flags...]" << std::endl;
     std::cerr << "\t--trace-en: Enable FST wave tracing" << std::endl;
     std::cerr << "\t--split-endpoints: Split the endpoints into requester/responder" << std::endl;
     std::cerr << "\t--perfect-mapping: Split the endpoints into requester/responder & assign a perfect mapping" << std::endl;

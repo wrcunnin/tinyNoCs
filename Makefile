@@ -19,12 +19,19 @@ ring-all: ring-16
 ###################################
 mesh-4x4:
 	fusesoc --cores-root . run --build --target tb_mesh_4x4 tinynocs:src:dv-mesh
-	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh_4x4
-	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh_4x4 --split-endpoints
-	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh_4x4 --perfect-mapping
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh --split-endpoints
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh --perfect-mapping
 	@echo "Built and ran a 16-endpoint 4x4 mesh network with basic params\n"
 
-mesh-all: mesh-4x4
+mesh-5x3:
+	fusesoc --cores-root . run --build --target tb_mesh_5x3 tinynocs:src:dv-mesh
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_5x3-verilator/Vmesh
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_5x3-verilator/Vmesh --split-endpoints
+	build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_5x3-verilator/Vmesh --perfect-mapping
+	@echo "Built and ran a 16-endpoint 5x3 mesh network with basic params\n"
+
+mesh-all: mesh-4x4 mesh-5x3
 	@echo "Built and ran all Mesh Network test benches\n"
 
 

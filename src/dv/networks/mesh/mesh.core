@@ -3,17 +3,20 @@ name: tinynocs:src:dv-mesh:0.0.1
 description: DV modules for Mesh Networks
 
 filesets:
-  mesh_4x4:
+  mesh:
     depend:
       - tinynocs:src:rtl-shared:0.0.1
       - tinynocs:src:rtl-mesh:0.0.1
     files:
-      - mesh_4x4.cc : {file_type: cppSource}
+      - mesh.cc : {file_type: cppSource}
     file_type: systemVerilogSource
 
 targets:
   default: &default
     default_tool: verilator
+    toplevel: mesh
+    filesets_append:
+      - mesh
     tools:
       verilator:
         verilator_options:
@@ -32,11 +35,17 @@ targets:
 
   tb_mesh_4x4:
     <<: *default
-    toplevel: mesh_4x4
-    filesets_append:
-      - mesh_4x4
     tools:
       verilator:
         verilator_options_append:
+          - -GTX_BUFFER_DEPTH=8
+          - -GRX_BUFFER_DEPTH=8
+
+  tb_mesh_5x3:
+    <<: *default
+    tools:
+      verilator:
+        verilator_options_append:
+          - -DUSE_5x3
           - -GTX_BUFFER_DEPTH=8
           - -GRX_BUFFER_DEPTH=8

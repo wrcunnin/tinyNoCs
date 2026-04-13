@@ -143,8 +143,13 @@ generate
         assign dst_id[1] = 0;
     end
     else if (IS_MESH) begin
+        `ifdef USE_5x3
+        assign dst_id[0] = MESH_5x3_ENDPOINTS[endpoint_idx][0];
+        assign dst_id[1] = MESH_5x3_ENDPOINTS[endpoint_idx][1];
+        `else
         assign dst_id[0] = MESH_4x4_ENDPOINTS[endpoint_idx][0];
         assign dst_id[1] = MESH_4x4_ENDPOINTS[endpoint_idx][1];
+        `endif
     end
     else begin
         always_comb begin
