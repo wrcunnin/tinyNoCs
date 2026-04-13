@@ -9,6 +9,9 @@
 
     "ERROR_ON_UNMAPPED_CELLS": false,
 
+    "IO_PIN_H_LAYER": "met1",
+    "IO_PIN_V_LAYER": "met2",
+
     "CTS_APPLY_NDR": "none",
     "CTS_SINK_CLUSTERING_MAX_DIAMETER": 50,
     "CTS_SINK_CLUSTERING_SIZE": 20,

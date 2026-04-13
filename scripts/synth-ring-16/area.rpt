@@ -1,0 +1,11 @@
+Cell type report:                       Count       Area
+    Fill cell                              3236   12146.65
+    Tap cell                             276210  345593.95
+    Buffer                               121865  551412.60
+    Clock buffer                          16161  238079.59
+    Timing Repair Buffer                 146913 1338065.81
+    Inverter                               4458   18128.64
+    Clock inverter                         2796   36353.62
+    Sequential cell                       88768 2332460.76
+    Multi-Input combinational cell       600110 6831953.64
+    Total                               1260517 11704195.25
