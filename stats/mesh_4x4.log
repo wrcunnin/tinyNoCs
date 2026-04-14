@@ -1,0 +1,59 @@
+fusesoc --cores-root . run --build --target tb_mesh_4x4 tinynocs:src:dv-mesh
+build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 45018 cycles in 4855ms, rate of 9272.5 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Mesh
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 16
+       Total requests (for all endpoints): 160000
+       Cycles to complete requests: 45011
+       Request Completion Rate: 3.55469 requests per cycle
+       Request Completion Rate Per Endpoint: 0.222168 requests per cycle
+       Cycles per Request: 0.281319
+
+build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh --split-endpoints
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 34886 cycles in 1922ms, rate of 18150.9 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Mesh
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 8
+       Total requests (for all endpoints): 80000
+       Cycles to complete requests: 34879
+       Request Completion Rate: 2.29364 requests per cycle
+       Request Completion Rate Per Endpoint: 0.286705 requests per cycle
+       Cycles per Request: 0.435988
+
+build/tinynocs_src_dv-mesh_0.0.1/tb_mesh_4x4-verilator/Vmesh --perfect-mapping
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 18764 cycles in 921ms, rate of 20373.5 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Mesh
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 8
+       Total requests (for all endpoints): 80000
+       Cycles to complete requests: 18757
+       Request Completion Rate: 4.26507 requests per cycle
+       Request Completion Rate Per Endpoint: 0.533134 requests per cycle
+       Cycles per Request: 0.234462
+
+Built and ran a 16-endpoint 4x4 mesh network with basic params\n

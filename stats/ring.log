@@ -1,0 +1,60 @@
+fusesoc --cores-root . run --build --target tb_ring_16 tinynocs:src:dv-ring
+build/tinynocs_src_dv-ring_0.0.1/tb_ring_16-verilator/Vring_16
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 178770 cycles in 15570ms, rate of 11481.7 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Ring
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 16
+       Total requests (for all endpoints): 160000
+       Cycles to complete requests: 178763
+       Request Completion Rate: 0.89504 requests per cycle
+       Request Completion Rate Per Endpoint: 0.05594 requests per cycle
+       Cycles per Request: 1.11727
+
+build/tinynocs_src_dv-ring_0.0.1/tb_ring_16-verilator/Vring_16 --split-endpoints
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 90086 cycles in 5345ms, rate of 16854.3 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Ring
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 8
+       Total requests (for all endpoints): 80000
+       Cycles to complete requests: 90079
+       Request Completion Rate: 0.888109 requests per cycle
+       Request Completion Rate Per Endpoint: 0.111014 requests per cycle
+       Cycles per Request: 1.12599
+
+build/tinynocs_src_dv-ring_0.0.1/tb_ring_16-verilator/Vring_16 --perfect-mapping
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 89234 cycles in 4114ms, rate of 21690.3 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Ring
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 8
+       Total requests (for all endpoints): 80000
+       Cycles to complete requests: 89227
+       Request Completion Rate: 0.89659 requests per cycle
+       Request Completion Rate Per Endpoint: 0.112074 requests per cycle
+       Cycles per Request: 1.11534
+
+Built and ran a 16-endpoint ring network with basic params\n
+Built and ran all Ring Network test benches\n
