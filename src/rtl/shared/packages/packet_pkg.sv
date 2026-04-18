@@ -207,8 +207,8 @@ logic        rxbar_``id``_endpoint_en_tx; \
 net_packet_t rxbar_``id``_endpoint_packet_tx; \
 ring_xbar #( \
     .ENDPOINT_ID(id), \
-    .NET_BUFFER_RX_DEPTH(2*RX_BUFFER_DEPTH), \
-    .EP_BUFFER_RX_DEPTH(RX_BUFFER_DEPTH) \
+    .NET_BUFFER_RX_DEPTH(2*BUFFER_RX_DEPTH), \
+    .EP_BUFFER_RX_DEPTH(BUFFER_RX_DEPTH) \
 ) rxbar_``id`` ( \
     .CLK(CLK), \
     .nRST(nRST), \

@@ -40,3 +40,4 @@ targets:
         verilator_options_append:
           - -GTX_BUFFER_DEPTH=8
           - -GRX_BUFFER_DEPTH=8
+          - -GBUFFER_RX_DEPTH=16

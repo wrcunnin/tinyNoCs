@@ -12,7 +12,8 @@ import packet_pkg::*;
 
 module ring_16 #(
     parameter int TX_BUFFER_DEPTH = 8,
-    parameter int RX_BUFFER_DEPTH = 8
+    parameter int RX_BUFFER_DEPTH = 8,
+    parameter int BUFFER_RX_DEPTH = 16
 ) (
     // Clock, async reset
     input logic CLK, nRST,

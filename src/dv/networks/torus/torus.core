@@ -40,6 +40,7 @@ targets:
         verilator_options_append:
           - -GTX_BUFFER_DEPTH=8
           - -GRX_BUFFER_DEPTH=8
+          - -GBUFFER_RX_DEPTH=16
 
   tb_torus_5x3:
     <<: *default
@@ -49,3 +50,4 @@ targets:
           - -DUSE_5x3
           - -GTX_BUFFER_DEPTH=8
           - -GRX_BUFFER_DEPTH=8
+          - -GBUFFER_RX_DEPTH=16
