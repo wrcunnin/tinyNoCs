@@ -1,0 +1,29 @@
+CAPI=2:
+name: tinynocs:src:rtl-torus:0.0.1
+description: RTL modules for Torus Networks
+
+filesets:
+  torus_xbar:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+    files:
+      - torus_xbar.sv
+      - torus_xbar_arbiter.sv
+      - torus_xbar_arbiter_in_ctrl.sv
+      - torus_xbar_arbiter_out_ctrl.sv
+    file_type: systemVerilogSource
+
+  torus:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+      - tinynocs:src:rtl-mesh:0.0.1
+    files:
+      - torus.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+      - torus_xbar
+      - torus
+

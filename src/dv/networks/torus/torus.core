@@ -1,0 +1,51 @@
+CAPI=2:
+name: tinynocs:src:dv-torus:0.0.1
+description: DV modules for Torus Networks
+
+filesets:
+  torus:
+    depend:
+      - tinynocs:src:rtl-shared:0.0.1
+      - tinynocs:src:rtl-torus:0.0.1
+    files:
+      - torus.cc : {file_type: cppSource}
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    default_tool: verilator
+    toplevel: torus
+    filesets_append:
+      - torus
+    tools:
+      verilator:
+        verilator_options:
+          - --assert
+          - -Wno-WIDTHCONCAT
+          - -Wno-SYMRSVDWORD
+          - -Wno-ENUMVALUE
+          - -Wno-TIMESCALEMOD
+          - -Wno-lint
+          - --trace
+          - --trace-fst
+          - --trace-structs
+          - --trace-threads 4
+          - --threads 4
+          - -CFLAGS "-std=c++23"
+
+  tb_torus_4x4:
+    <<: *default
+    tools:
+      verilator:
+        verilator_options_append:
+          - -GTX_BUFFER_DEPTH=8
+          - -GRX_BUFFER_DEPTH=8
+
+  tb_torus_5x3:
+    <<: *default
+    tools:
+      verilator:
+        verilator_options_append:
+          - -DUSE_5x3
+          - -GTX_BUFFER_DEPTH=8
+          - -GRX_BUFFER_DEPTH=8

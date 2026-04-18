@@ -1,0 +1,60 @@
+fusesoc --cores-root . run --build --target tb_torus_5x3 tinynocs:src:dv-torus
+build/tinynocs_src_dv-torus_0.0.1/tb_torus_5x3-verilator/Vtorus
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 39480 cycles in 450ms, rate of 87733.3 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Torus
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 16
+       Total requests (for all endpoints): 160000
+       Cycles to complete requests: 39473
+       Request Completion Rate: 4.0534 requests per cycle
+       Request Completion Rate Per Endpoint: 0.253338 requests per cycle
+       Cycles per Request: 0.246706
+
+build/tinynocs_src_dv-torus_0.0.1/tb_torus_5x3-verilator/Vtorus --split-endpoints
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 28241 cycles in 298ms, rate of 94768.5 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Torus
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 8
+       Total requests (for all endpoints): 80000
+       Cycles to complete requests: 28234
+       Request Completion Rate: 2.83346 requests per cycle
+       Request Completion Rate Per Endpoint: 0.354183 requests per cycle
+       Cycles per Request: 0.352925
+
+build/tinynocs_src_dv-torus_0.0.1/tb_torus_5x3-verilator/Vtorus --perfect-mapping
+Configuration: 
+	Trace: Disabled
+	Cycle Limit: 1000000
+------------------
+ Simulation Begin
+------------------
+Simulated 16264 cycles in 149ms, rate of 109154 cycles per second.
+
+[INFO] tinyNoC TB Statistics
+       Network Style: Torus
+       Number of Endpoints: 16
+       Requester/Responder Endpoints: 8
+       Total requests (for all endpoints): 80000
+       Cycles to complete requests: 16257
+       Request Completion Rate: 4.92096 requests per cycle
+       Request Completion Rate Per Endpoint: 0.61512 requests per cycle
+       Cycles per Request: 0.203212
+
+Built and ran a 16-endpoint 5x3 torus network with basic params
+

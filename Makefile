@@ -36,6 +36,27 @@ mesh-all: mesh-4x4 mesh-5x3
 
 
 ###################################
+# Torus Test Benches
+###################################
+torus-4x4:
+	fusesoc --cores-root . run --build --target tb_torus_4x4 tinynocs:src:dv-torus
+	build/tinynocs_src_dv-torus_0.0.1/tb_torus_4x4-verilator/Vtorus
+	build/tinynocs_src_dv-torus_0.0.1/tb_torus_4x4-verilator/Vtorus --split-endpoints
+	build/tinynocs_src_dv-torus_0.0.1/tb_torus_4x4-verilator/Vtorus --perfect-mapping
+	@echo "Built and ran a 16-endpoint 4x4 torus network with basic params\n"
+
+torus-5x3:
+	fusesoc --cores-root . run --build --target tb_torus_5x3 tinynocs:src:dv-torus
+	build/tinynocs_src_dv-torus_0.0.1/tb_torus_5x3-verilator/Vtorus
+	build/tinynocs_src_dv-torus_0.0.1/tb_torus_5x3-verilator/Vtorus --split-endpoints
+	build/tinynocs_src_dv-torus_0.0.1/tb_torus_5x3-verilator/Vtorus --perfect-mapping
+	@echo "Built and ran a 16-endpoint 5x3 torus network with basic params\n"
+
+torus-all: torus-4x4 torus-5x3
+	@echo "Built and ran all Torus Network test benches\n"
+
+
+###################################
 # Endpoint Test Benches
 ###################################
 endpoint:

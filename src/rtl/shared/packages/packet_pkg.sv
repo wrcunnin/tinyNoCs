@@ -494,6 +494,187 @@ assign ``net_name``_packet_rx = mesh_xbar_``xid``_``yid``_``direction``_packet_t
 // End Mesh Defines
 ////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////
+// Begin Torus Defines
+////////////////////////////////////////////////////////
+`define CREATE_TORUS_XBARB_CTRL(direction) \
+logic        ``direction``_torus_xbarb_in_ctrl_net_stall_rx; \
+logic        ``direction``_torus_xbarb_in_ctrl_net_en_rx; \
+net_packet_t ``direction``_torus_xbarb_in_ctrl_net_packet_rx; \
+logic        ``direction``_torus_xbarb_in_ctrl_north_en_rx; \
+logic        ``direction``_torus_xbarb_in_ctrl_south_en_rx; \
+logic        ``direction``_torus_xbarb_in_ctrl_east_en_rx; \
+logic        ``direction``_torus_xbarb_in_ctrl_west_en_rx; \
+logic        ``direction``_torus_xbarb_in_ctrl_torus_en_rx; \
+logic        ``direction``_torus_xbarb_in_ctrl_north_stall_tx; \
+logic        ``direction``_torus_xbarb_in_ctrl_south_stall_tx; \
+logic        ``direction``_torus_xbarb_in_ctrl_east_stall_tx; \
+logic        ``direction``_torus_xbarb_in_ctrl_west_stall_tx; \
+logic        ``direction``_torus_xbarb_in_ctrl_torus_stall_tx; \
+torus_xbar_arbiter_in_ctrl #( \
+    .POS_X(POS_X), \
+    .POS_Y(POS_Y), \
+    .MAX_X(MAX_X), \
+    .MAX_Y(MAX_Y), \
+    .PREFER_VERTICAL(PREFER_VERTICAL), \
+    .VERTICAL_TORUS(VERTICAL_TORUS) \
+) ``direction``_torus_xbarb_in_ctrl ( \
+    .net_stall_rx(``direction``_torus_xbarb_in_ctrl_net_stall_rx), \
+    .net_en_rx(``direction``_torus_xbarb_in_ctrl_net_en_rx), \
+    .net_packet_rx(``direction``_torus_xbarb_in_ctrl_net_packet_rx), \
+    .north_en_rx(``direction``_torus_xbarb_in_ctrl_north_en_rx), \
+    .south_en_rx(``direction``_torus_xbarb_in_ctrl_south_en_rx), \
+    .east_en_rx(``direction``_torus_xbarb_in_ctrl_east_en_rx), \
+    .west_en_rx(``direction``_torus_xbarb_in_ctrl_west_en_rx), \
+    .torus_en_rx(``direction``_torus_xbarb_in_ctrl_torus_en_rx), \
+    .north_stall_tx(``direction``_torus_xbarb_in_ctrl_north_stall_tx), \
+    .south_stall_tx(``direction``_torus_xbarb_in_ctrl_south_stall_tx), \
+    .east_stall_tx(``direction``_torus_xbarb_in_ctrl_east_stall_tx), \
+    .west_stall_tx(``direction``_torus_xbarb_in_ctrl_west_stall_tx), \
+    .torus_stall_tx(``direction``_torus_xbarb_in_ctrl_torus_stall_tx) \
+); \
+logic              ``direction``_torus_xbarb_out_ctrl_net_stall_tx; \
+logic              ``direction``_torus_xbarb_out_ctrl_net_en_tx; \
+net_packet_t       ``direction``_torus_xbarb_out_ctrl_net_packet_tx; \
+logic        [3:0] ``direction``_torus_xbarb_out_ctrl_net_stall_rx; \
+logic        [3:0] ``direction``_torus_xbarb_out_ctrl_net_en_rx; \
+net_packet_t [3:0] ``direction``_torus_xbarb_out_ctrl_net_packet_rx; \
+torus_xbar_arbiter_out_ctrl ``direction``_torus_xbarb_out_ctrl ( \
+    .CLK(CLK), \
+    .nRST(nRST), \
+    .net_stall_tx(``direction``_torus_xbarb_out_ctrl_net_stall_tx), \
+    .net_en_tx(``direction``_torus_xbarb_out_ctrl_net_en_tx), \
+    .net_packet_tx(``direction``_torus_xbarb_out_ctrl_net_packet_tx), \
+    .net_stall_rx(``direction``_torus_xbarb_out_ctrl_net_stall_rx), \
+    .net_en_rx(``direction``_torus_xbarb_out_ctrl_net_en_rx), \
+    .net_packet_rx(``direction``_torus_xbarb_out_ctrl_net_packet_rx) \
+);
 
+`define CONNECT_TORUS_XBARB_CTRL_IO(direction) \
+assign ``direction``_torus_xbarb_out_ctrl_net_stall_tx = ``direction``_stall_tx; \
+assign ``direction``_en_tx = ``direction``_torus_xbarb_out_ctrl_net_en_tx; \
+assign ``direction``_packet_tx = ``direction``_torus_xbarb_out_ctrl_net_packet_tx; \
+assign ``direction``_stall_rx = ``direction``_torus_xbarb_in_ctrl_net_stall_rx; \
+assign ``direction``_torus_xbarb_in_ctrl_net_en_rx = ``direction``_en_rx; \
+assign ``direction``_torus_xbarb_in_ctrl_net_packet_rx = ``direction``_packet_rx;
+
+`define CONNECT_TORUS_XBARB_CTRL_INTERNAL(direction, dir0, dir1, dir2, dir3) \
+assign ``direction``_torus_xbarb_in_ctrl_``direction``_stall_tx = 1; \
+assign ``direction``_torus_xbarb_in_ctrl_``dir0``_stall_tx = ``dir0``_torus_xbarb_out_ctrl_net_stall_rx[3]; \
+assign ``direction``_torus_xbarb_in_ctrl_``dir1``_stall_tx = ``dir1``_torus_xbarb_out_ctrl_net_stall_rx[2]; \
+assign ``direction``_torus_xbarb_in_ctrl_``dir2``_stall_tx = ``dir2``_torus_xbarb_out_ctrl_net_stall_rx[1]; \
+assign ``direction``_torus_xbarb_in_ctrl_``dir3``_stall_tx = ``dir3``_torus_xbarb_out_ctrl_net_stall_rx[0]; \
+assign ``direction``_torus_xbarb_out_ctrl_net_en_rx[0] = ``dir0``_torus_xbarb_in_ctrl_``direction``_en_rx; \
+assign ``direction``_torus_xbarb_out_ctrl_net_en_rx[1] = ``dir1``_torus_xbarb_in_ctrl_``direction``_en_rx; \
+assign ``direction``_torus_xbarb_out_ctrl_net_en_rx[2] = ``dir2``_torus_xbarb_in_ctrl_``direction``_en_rx; \
+assign ``direction``_torus_xbarb_out_ctrl_net_en_rx[3] = ``dir3``_torus_xbarb_in_ctrl_``direction``_en_rx; \
+assign ``direction``_torus_xbarb_out_ctrl_net_packet_rx[0] = ``dir0``_packet_rx; \
+assign ``direction``_torus_xbarb_out_ctrl_net_packet_rx[1] = ``dir1``_packet_rx; \
+assign ``direction``_torus_xbarb_out_ctrl_net_packet_rx[2] = ``dir2``_packet_rx; \
+assign ``direction``_torus_xbarb_out_ctrl_net_packet_rx[3] = ``dir3``_packet_rx;
+
+`define CONNECT_TORUS_XBAR_INTERNALS(direction) \
+assign ``direction``_buffer_rx_ren = !(torus_xbarb_``direction``_stall_rx); \
+assign torus_xbarb_``direction``_en_rx = !(``direction``_buffer_rx_empty); \
+assign torus_xbarb_``direction``_packet_rx = ``direction``_buffer_rx_rdata; \
+assign ``direction``_stall_rx = ``direction``_buffer_rx_full; \
+assign ``direction``_buffer_rx_wdata = ``direction``_packet_rx; \
+assign ``direction``_buffer_rx_wen = ``direction``_en_rx; \
+assign torus_xbarb_``direction``_stall_tx = ``direction``_stall_tx; \
+assign ``direction``_en_tx = torus_xbarb_``direction``_en_tx; \
+assign ``direction``_packet_tx = torus_xbarb_``direction``_packet_tx;
+
+
+`define CREATE_TORUS_XBAR(xid, yid, max_x, max_y, prefer_vertical, vertical_torus) \
+logic        torus_xbar_``xid``_``yid``_north_stall_tx; \
+logic        torus_xbar_``xid``_``yid``_north_en_tx; \
+net_packet_t torus_xbar_``xid``_``yid``_north_packet_tx; \
+logic        torus_xbar_``xid``_``yid``_north_stall_rx; \
+logic        torus_xbar_``xid``_``yid``_north_en_rx; \
+net_packet_t torus_xbar_``xid``_``yid``_north_packet_rx; \
+logic        torus_xbar_``xid``_``yid``_south_stall_tx; \
+logic        torus_xbar_``xid``_``yid``_south_en_tx; \
+net_packet_t torus_xbar_``xid``_``yid``_south_packet_tx; \
+logic        torus_xbar_``xid``_``yid``_south_stall_rx; \
+logic        torus_xbar_``xid``_``yid``_south_en_rx; \
+net_packet_t torus_xbar_``xid``_``yid``_south_packet_rx; \
+logic        torus_xbar_``xid``_``yid``_east_stall_tx; \
+logic        torus_xbar_``xid``_``yid``_east_en_tx; \
+net_packet_t torus_xbar_``xid``_``yid``_east_packet_tx; \
+logic        torus_xbar_``xid``_``yid``_east_stall_rx; \
+logic        torus_xbar_``xid``_``yid``_east_en_rx; \
+net_packet_t torus_xbar_``xid``_``yid``_east_packet_rx; \
+logic        torus_xbar_``xid``_``yid``_west_stall_tx; \
+logic        torus_xbar_``xid``_``yid``_west_en_tx; \
+net_packet_t torus_xbar_``xid``_``yid``_west_packet_tx; \
+logic        torus_xbar_``xid``_``yid``_west_stall_rx; \
+logic        torus_xbar_``xid``_``yid``_west_en_rx; \
+net_packet_t torus_xbar_``xid``_``yid``_west_packet_rx; \
+logic        torus_xbar_``xid``_``yid``_torus_stall_tx; \
+logic        torus_xbar_``xid``_``yid``_torus_en_tx; \
+net_packet_t torus_xbar_``xid``_``yid``_torus_packet_tx; \
+logic        torus_xbar_``xid``_``yid``_torus_stall_rx; \
+logic        torus_xbar_``xid``_``yid``_torus_en_rx; \
+net_packet_t torus_xbar_``xid``_``yid``_torus_packet_rx; \
+torus_xbar #( \
+    .POS_X(xid), \
+    .POS_Y(yid), \
+    .MAX_X(max_x), \
+    .MAX_Y(max_y), \
+    .PREFER_VERTICAL(prefer_vertical), \
+    .BUFFER_RX_DEPTH(BUFFER_RX_DEPTH), \
+    .VERTICAL_TORUS(vertical_torus) \
+) torus_xbar_``xid``_``yid`` ( \
+    .CLK(CLK), \
+    .nRST(nRST), \
+    .north_stall_tx(torus_xbar_``xid``_``yid``_north_stall_tx), \
+    .north_en_tx(torus_xbar_``xid``_``yid``_north_en_tx), \
+    .north_packet_tx(torus_xbar_``xid``_``yid``_north_packet_tx), \
+    .north_stall_rx(torus_xbar_``xid``_``yid``_north_stall_rx), \
+    .north_en_rx(torus_xbar_``xid``_``yid``_north_en_rx), \
+    .north_packet_rx(torus_xbar_``xid``_``yid``_north_packet_rx), \
+    .south_stall_tx(torus_xbar_``xid``_``yid``_south_stall_tx), \
+    .south_en_tx(torus_xbar_``xid``_``yid``_south_en_tx), \
+    .south_packet_tx(torus_xbar_``xid``_``yid``_south_packet_tx), \
+    .south_stall_rx(torus_xbar_``xid``_``yid``_south_stall_rx), \
+    .south_en_rx(torus_xbar_``xid``_``yid``_south_en_rx), \
+    .south_packet_rx(torus_xbar_``xid``_``yid``_south_packet_rx), \
+    .east_stall_tx(torus_xbar_``xid``_``yid``_east_stall_tx), \
+    .east_en_tx(torus_xbar_``xid``_``yid``_east_en_tx), \
+    .east_packet_tx(torus_xbar_``xid``_``yid``_east_packet_tx), \
+    .east_stall_rx(torus_xbar_``xid``_``yid``_east_stall_rx), \
+    .east_en_rx(torus_xbar_``xid``_``yid``_east_en_rx), \
+    .east_packet_rx(torus_xbar_``xid``_``yid``_east_packet_rx), \
+    .west_stall_tx(torus_xbar_``xid``_``yid``_west_stall_tx), \
+    .west_en_tx(torus_xbar_``xid``_``yid``_west_en_tx), \
+    .west_packet_tx(torus_xbar_``xid``_``yid``_west_packet_tx), \
+    .west_stall_rx(torus_xbar_``xid``_``yid``_west_stall_rx), \
+    .west_en_rx(torus_xbar_``xid``_``yid``_west_en_rx), \
+    .west_packet_rx(torus_xbar_``xid``_``yid``_west_packet_rx), \
+    .torus_stall_tx(torus_xbar_``xid``_``yid``_torus_stall_tx), \
+    .torus_en_tx(torus_xbar_``xid``_``yid``_torus_en_tx), \
+    .torus_packet_tx(torus_xbar_``xid``_``yid``_torus_packet_tx), \
+    .torus_stall_rx(torus_xbar_``xid``_``yid``_torus_stall_rx), \
+    .torus_en_rx(torus_xbar_``xid``_``yid``_torus_en_rx), \
+    .torus_packet_rx(torus_xbar_``xid``_``yid``_torus_packet_rx) \
+);
+
+`define CONNECT_TORUS_XBARS(xid, yid, net_name, in_direction, out_direction) \
+assign torus_xbar_``xid``_``yid``_``in_direction``_stall_tx = ``net_name``_``out_direction``_stall_rx; \
+assign torus_xbar_``xid``_``yid``_``in_direction``_en_rx = ``net_name``_``out_direction``_en_tx; \
+assign torus_xbar_``xid``_``yid``_``in_direction``_packet_rx = ``net_name``_``out_direction``_packet_tx;
+
+`define CONNECT_TORUS_XBAR_TO_ENDPOINT(xid, yid, net_name, direction) \
+assign torus_xbar_``xid``_``yid``_``direction``_stall_tx = ``net_name``_stall_rx; \
+assign torus_xbar_``xid``_``yid``_``direction``_en_rx = ``net_name``_en_tx; \
+assign torus_xbar_``xid``_``yid``_``direction``_packet_rx = ``net_name``_packet_tx; \
+assign ``net_name``_stall_tx = torus_xbar_``xid``_``yid``_``direction``_stall_rx; \
+assign ``net_name``_en_rx = torus_xbar_``xid``_``yid``_``direction``_en_tx; \
+assign ``net_name``_packet_rx = torus_xbar_``xid``_``yid``_``direction``_packet_tx;
+
+
+////////////////////////////////////////////////////////
+// End Torus Defines
+////////////////////////////////////////////////////////
 
 endpackage
