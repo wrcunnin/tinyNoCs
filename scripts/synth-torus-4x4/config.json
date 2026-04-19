@@ -1,0 +1,21 @@
+{
+    "DESIGN_NAME": "torus",
+    "VERILOG_FILES": ["dir::../../verilog-torus-4x4/torus.v"],
+    "CLOCK_PERIOD": 10,
+    "CLOCK_PORT": "CLK",
+
+    "SYNTH_ABC_BUFFERING": true,
+    "SYNTH_HIERARCHY_MODE": "keep",
+
+    "ERROR_ON_UNMAPPED_CELLS": false,
+
+    "IO_PIN_H_LAYER": "met1",
+    "IO_PIN_V_LAYER": "met2",
+
+    "CTS_APPLY_NDR": "none",
+    "CTS_SINK_CLUSTERING_MAX_DIAMETER": 50,
+    "CTS_SINK_CLUSTERING_SIZE": 20,
+
+    "PL_RESIZER_ALLOW_SETUP_VIOS": true,
+    "PL_RESIZER_FIX_HOLD_FIRST": true
+}
