@@ -161,36 +161,40 @@ package packet_pkg;
   // Ring defines
   ////////////////////////////////////////////////////////
   `define CREATE_ENDPOINT_RING_XBAR(id) \
-logic        endpoint_``id``_req_full; \
-logic        endpoint_``id``_req_empty; \
-logic        endpoint_``id``_req_en; \
-packet_t     endpoint_``id``_req_packet; \
-logic        endpoint_``id``_req_comp_stall; \
-logic        endpoint_``id``_req_comp_en; \
-packet_t     endpoint_``id``_req_comp_packet; \
-logic        endpoint_``id``_resp_full; \
-logic        endpoint_``id``_resp_empty; \
-logic        endpoint_``id``_resp_stall; \
-logic        endpoint_``id``_resp_en; \
-packet_t     endpoint_``id``_resp_packet; \
-logic        endpoint_``id``_resp_comp_en; \
-addr_t       endpoint_``id``_resp_comp_return_addr; \
-packet_t     endpoint_``id``_resp_comp_packet; \
-logic        endpoint_``id``_net_stall_tx; \
-logic        endpoint_``id``_net_en_tx; \
-net_packet_t endpoint_``id``_net_packet_tx; \
-logic        endpoint_``id``_net_stall_rx; \
-logic        endpoint_``id``_net_en_rx; \
-net_packet_t endpoint_``id``_net_packet_rx; \
+endpoint_id_t endpoint_``id``_strap_endpoint_id_x; \
+endpoint_id_t endpoint_``id``_strap_endpoint_id_y; \
+logic         endpoint_``id``_req_full; \
+logic         endpoint_``id``_req_empty; \
+logic         endpoint_``id``_req_en; \
+packet_t      endpoint_``id``_req_packet; \
+logic         endpoint_``id``_req_comp_stall; \
+logic         endpoint_``id``_req_comp_en; \
+packet_t      endpoint_``id``_req_comp_packet; \
+logic         endpoint_``id``_resp_full; \
+logic         endpoint_``id``_resp_empty; \
+logic         endpoint_``id``_resp_stall; \
+logic         endpoint_``id``_resp_en; \
+packet_t      endpoint_``id``_resp_packet; \
+logic         endpoint_``id``_resp_comp_en; \
+addr_t        endpoint_``id``_resp_comp_return_addr; \
+packet_t      endpoint_``id``_resp_comp_packet; \
+logic         endpoint_``id``_net_stall_tx; \
+logic         endpoint_``id``_net_en_tx; \
+net_packet_t  endpoint_``id``_net_packet_tx; \
+logic         endpoint_``id``_net_stall_rx; \
+logic         endpoint_``id``_net_en_rx; \
+net_packet_t  endpoint_``id``_net_packet_rx; \
+assign endpoint_``id``_strap_endpoint_id_x = endpoint_id_t'(id); \
+assign endpoint_``id``_strap_endpoint_id_y = endpoint_id_t'(0); \
 endpoint #( \
     .TxBufferDepth(TxBufferDepth), \
     .RxBufferDepth(RxBufferDepth), \
-    .EndpointIdX(id), \
-    .EndpointIdY(0), \
-    .NetworkType(0) \
+    .NetworkType(kRing) \
 ) endpoint_``id`` ( \
     .CLK(CLK), \
     .nRST(nRST), \
+    .strap_endpoint_id_x(endpoint_``id``_strap_endpoint_id_x), \
+    .strap_endpoint_id_y(endpoint_``id``_strap_endpoint_id_y), \
     .req_full(endpoint_``id``_req_full), \
     .req_empty(endpoint_``id``_req_empty), \
     .req_en(endpoint_``id``_req_en), \
@@ -227,12 +231,12 @@ logic        rxbar_``id``_endpoint_stall_tx; \
 logic        rxbar_``id``_endpoint_en_tx; \
 net_packet_t rxbar_``id``_endpoint_packet_tx; \
 ring_xbar #( \
-    .EndpointId(id), \
     .NetBufferRxDepth(2*BufferRxDepth), \
     .EpBufferRxDepth(BufferRxDepth) \
 ) rxbar_``id`` ( \
     .CLK(CLK), \
     .nRST(nRST), \
+    .strap_endpoint_id(endpoint_id_t'(id)), \
     .net_stall_rx(rxbar_``id``_net_stall_rx), \
     .net_en_rx(rxbar_``id``_net_en_rx), \
     .net_packet_rx(rxbar_``id``_net_packet_rx), \
@@ -292,13 +296,14 @@ logic        ``direction``_mesh_xbarb_in_ctrl_north_stall_tx; \
 logic        ``direction``_mesh_xbarb_in_ctrl_south_stall_tx; \
 logic        ``direction``_mesh_xbarb_in_ctrl_east_stall_tx; \
 logic        ``direction``_mesh_xbarb_in_ctrl_west_stall_tx; \
-mesh_xbar_arbiter_in_ctrl #( \
-    .POS_X(POS_X), \
-    .POS_Y(POS_Y), \
-    .MAX_X(MAX_X), \
-    .MAX_Y(MAX_Y), \
-    .PREFER_VERTICAL(PREFER_VERTICAL) \
-) ``direction``_mesh_xbarb_in_ctrl ( \
+mesh_xbar_arbiter_in_ctrl ``direction``_mesh_xbarb_in_ctrl ( \
+    .strap_pos_x(strap_pos_x), \
+    .strap_pos_y(strap_pos_y), \
+    .strap_min_x(endpoint_id_t'(1'b1)), \
+    .strap_min_y(endpoint_id_t'(1'b1)), \
+    .strap_max_x(strap_max_x), \
+    .strap_max_y(strap_max_y), \
+    .strap_prefer_vertical(strap_prefer_vertical), \
     .net_stall_rx(``direction``_mesh_xbarb_in_ctrl_net_stall_rx), \
     .net_en_rx(``direction``_mesh_xbarb_in_ctrl_net_en_rx), \
     .net_packet_rx(``direction``_mesh_xbarb_in_ctrl_net_packet_rx), \
@@ -368,40 +373,50 @@ assign ``direction``_en_tx = mesh_xbarb_``direction``_en_tx; \
 assign ``direction``_packet_tx = mesh_xbarb_``direction``_packet_tx;
 
   `define CREATE_MESH_XBAR(xid, yid, max_x, max_y, prefer_vertical) \
-logic        mesh_xbar_``xid``_``yid``_north_stall_tx; \
-logic        mesh_xbar_``xid``_``yid``_north_en_tx; \
-net_packet_t mesh_xbar_``xid``_``yid``_north_packet_tx; \
-logic        mesh_xbar_``xid``_``yid``_north_stall_rx; \
-logic        mesh_xbar_``xid``_``yid``_north_en_rx; \
-net_packet_t mesh_xbar_``xid``_``yid``_north_packet_rx; \
-logic        mesh_xbar_``xid``_``yid``_south_stall_tx; \
-logic        mesh_xbar_``xid``_``yid``_south_en_tx; \
-net_packet_t mesh_xbar_``xid``_``yid``_south_packet_tx; \
-logic        mesh_xbar_``xid``_``yid``_south_stall_rx; \
-logic        mesh_xbar_``xid``_``yid``_south_en_rx; \
-net_packet_t mesh_xbar_``xid``_``yid``_south_packet_rx; \
-logic        mesh_xbar_``xid``_``yid``_east_stall_tx; \
-logic        mesh_xbar_``xid``_``yid``_east_en_tx; \
-net_packet_t mesh_xbar_``xid``_``yid``_east_packet_tx; \
-logic        mesh_xbar_``xid``_``yid``_east_stall_rx; \
-logic        mesh_xbar_``xid``_``yid``_east_en_rx; \
-net_packet_t mesh_xbar_``xid``_``yid``_east_packet_rx; \
-logic        mesh_xbar_``xid``_``yid``_west_stall_tx; \
-logic        mesh_xbar_``xid``_``yid``_west_en_tx; \
-net_packet_t mesh_xbar_``xid``_``yid``_west_packet_tx; \
-logic        mesh_xbar_``xid``_``yid``_west_stall_rx; \
-logic        mesh_xbar_``xid``_``yid``_west_en_rx; \
-net_packet_t mesh_xbar_``xid``_``yid``_west_packet_rx; \
+endpoint_id_t mesh_xbar_``xid``_``yid``_strap_pos_x; \
+endpoint_id_t mesh_xbar_``xid``_``yid``_strap_pos_y; \
+endpoint_id_t mesh_xbar_``xid``_``yid``_strap_max_x; \
+endpoint_id_t mesh_xbar_``xid``_``yid``_strap_max_y; \
+logic         mesh_xbar_``xid``_``yid``_strap_prefer_vertical; \
+logic         mesh_xbar_``xid``_``yid``_north_stall_tx; \
+logic         mesh_xbar_``xid``_``yid``_north_en_tx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_north_packet_tx; \
+logic         mesh_xbar_``xid``_``yid``_north_stall_rx; \
+logic         mesh_xbar_``xid``_``yid``_north_en_rx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_north_packet_rx; \
+logic         mesh_xbar_``xid``_``yid``_south_stall_tx; \
+logic         mesh_xbar_``xid``_``yid``_south_en_tx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_south_packet_tx; \
+logic         mesh_xbar_``xid``_``yid``_south_stall_rx; \
+logic         mesh_xbar_``xid``_``yid``_south_en_rx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_south_packet_rx; \
+logic         mesh_xbar_``xid``_``yid``_east_stall_tx; \
+logic         mesh_xbar_``xid``_``yid``_east_en_tx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_east_packet_tx; \
+logic         mesh_xbar_``xid``_``yid``_east_stall_rx; \
+logic         mesh_xbar_``xid``_``yid``_east_en_rx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_east_packet_rx; \
+logic         mesh_xbar_``xid``_``yid``_west_stall_tx; \
+logic         mesh_xbar_``xid``_``yid``_west_en_tx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_west_packet_tx; \
+logic         mesh_xbar_``xid``_``yid``_west_stall_rx; \
+logic         mesh_xbar_``xid``_``yid``_west_en_rx; \
+net_packet_t  mesh_xbar_``xid``_``yid``_west_packet_rx; \
+assign mesh_xbar_``xid``_``yid``_strap_pos_x = endpoint_id_t'(xid); \
+assign mesh_xbar_``xid``_``yid``_strap_pos_y = endpoint_id_t'(yid); \
+assign mesh_xbar_``xid``_``yid``_strap_max_x = endpoint_id_t'(max_x); \
+assign mesh_xbar_``xid``_``yid``_strap_max_y = endpoint_id_t'(max_y); \
+assign mesh_xbar_``xid``_``yid``_strap_prefer_vertical = 1'b1; \
 mesh_xbar #( \
-    .POS_X(xid), \
-    .POS_Y(yid), \
-    .MAX_X(max_x), \
-    .MAX_Y(max_y), \
-    .PREFER_VERTICAL(1), \
     .BufferRxDepth(BufferRxDepth) \
 ) mesh_xbar_``xid``_``yid`` ( \
     .CLK(CLK), \
     .nRST(nRST), \
+    .strap_pos_x(mesh_xbar_``xid``_``yid``_strap_pos_x), \
+    .strap_pos_y(mesh_xbar_``xid``_``yid``_strap_pos_y), \
+    .strap_max_x(mesh_xbar_``xid``_``yid``_strap_max_x), \
+    .strap_max_y(mesh_xbar_``xid``_``yid``_strap_max_y), \
+    .strap_prefer_vertical(mesh_xbar_``xid``_``yid``_strap_prefer_vertical), \
     .north_stall_tx(mesh_xbar_``xid``_``yid``_north_stall_tx), \
     .north_en_tx(mesh_xbar_``xid``_``yid``_north_en_tx), \
     .north_packet_tx(mesh_xbar_``xid``_``yid``_north_packet_tx), \
@@ -429,37 +444,41 @@ mesh_xbar #( \
 );
 
   `define CREATE_ENDPOINT_MESH(id, xid, yid) \
-logic        endpoint_``id``_req_full; \
-logic        endpoint_``id``_req_empty; \
-logic        endpoint_``id``_req_en; \
-packet_t     endpoint_``id``_req_packet; \
-logic        endpoint_``id``_req_comp_stall; \
-logic        endpoint_``id``_req_comp_en; \
-packet_t     endpoint_``id``_req_comp_packet; \
-logic        endpoint_``id``_resp_full; \
-logic        endpoint_``id``_resp_empty; \
-logic        endpoint_``id``_resp_stall; \
-logic        endpoint_``id``_resp_en; \
-packet_t     endpoint_``id``_resp_packet; \
-logic        endpoint_``id``_resp_comp_en; \
-addr_t       endpoint_``id``_resp_comp_return_addr; \
-packet_t     endpoint_``id``_resp_comp_packet; \
-logic        endpoint_``id``_net_stall_tx; \
-logic        endpoint_``id``_net_en_tx; \
-net_packet_t endpoint_``id``_net_packet_tx; \
-logic        endpoint_``id``_net_stall_rx; \
-logic        endpoint_``id``_net_en_rx; \
-net_packet_t endpoint_``id``_net_packet_rx; \
+endpoint_id_t endpoint_``id``_strap_endpoint_id_x; \
+endpoint_id_t endpoint_``id``_strap_endpoint_id_y; \
+logic         endpoint_``id``_req_full; \
+logic         endpoint_``id``_req_empty; \
+logic         endpoint_``id``_req_en; \
+packet_t      endpoint_``id``_req_packet; \
+logic         endpoint_``id``_req_comp_stall; \
+logic         endpoint_``id``_req_comp_en; \
+packet_t      endpoint_``id``_req_comp_packet; \
+logic         endpoint_``id``_resp_full; \
+logic         endpoint_``id``_resp_empty; \
+logic         endpoint_``id``_resp_stall; \
+logic         endpoint_``id``_resp_en; \
+packet_t      endpoint_``id``_resp_packet; \
+logic         endpoint_``id``_resp_comp_en; \
+addr_t        endpoint_``id``_resp_comp_return_addr; \
+packet_t      endpoint_``id``_resp_comp_packet; \
+logic         endpoint_``id``_net_stall_tx; \
+logic         endpoint_``id``_net_en_tx; \
+net_packet_t  endpoint_``id``_net_packet_tx; \
+logic         endpoint_``id``_net_stall_rx; \
+logic         endpoint_``id``_net_en_rx; \
+net_packet_t  endpoint_``id``_net_packet_rx; \
+assign endpoint_``id``_strap_endpoint_id_x = endpoint_id_t'(xid); \
+assign endpoint_``id``_strap_endpoint_id_y = endpoint_id_t'(yid); \
 generate \
 endpoint #( \
     .TxBufferDepth(TxBufferDepth), \
     .RxBufferDepth(RxBufferDepth), \
-    .EndpointIdX(xid), \
-    .EndpointIdY(yid), \
-    .NetworkType(1) \
+    .NetworkType(kMesh) \
 ) endpoint_``id`` ( \
     .CLK(CLK), \
     .nRST(nRST), \
+    .strap_endpoint_id_x(endpoint_``id``_strap_endpoint_id_x), \
+    .strap_endpoint_id_y(endpoint_``id``_strap_endpoint_id_y), \
     .req_full(endpoint_``id``_req_full), \
     .req_empty(endpoint_``id``_req_empty), \
     .req_en(endpoint_``id``_req_en), \
@@ -533,14 +552,15 @@ logic        ``direction``_torus_xbarb_in_ctrl_south_stall_tx; \
 logic        ``direction``_torus_xbarb_in_ctrl_east_stall_tx; \
 logic        ``direction``_torus_xbarb_in_ctrl_west_stall_tx; \
 logic        ``direction``_torus_xbarb_in_ctrl_torus_stall_tx; \
-torus_xbar_arbiter_in_ctrl #( \
-    .POS_X(POS_X), \
-    .POS_Y(POS_Y), \
-    .MAX_X(MAX_X), \
-    .MAX_Y(MAX_Y), \
-    .PREFER_VERTICAL(PREFER_VERTICAL), \
-    .VERTICAL_TORUS(VERTICAL_TORUS) \
-) ``direction``_torus_xbarb_in_ctrl ( \
+torus_xbar_arbiter_in_ctrl ``direction``_torus_xbarb_in_ctrl ( \
+    .strap_pos_x(strap_pos_x), \
+    .strap_pos_y(strap_pos_y), \
+    .strap_min_x(endpoint_id_t'(1'b1)), \
+    .strap_min_y(endpoint_id_t'(1'b1)), \
+    .strap_max_x(strap_max_x), \
+    .strap_max_y(strap_max_y), \
+    .strap_vertical_torus(strap_vertical_torus), \
+    .strap_prefer_vertical(strap_prefer_vertical), \
     .net_stall_rx(``direction``_torus_xbarb_in_ctrl_net_stall_rx), \
     .net_en_rx(``direction``_torus_xbarb_in_ctrl_net_en_rx), \
     .net_packet_rx(``direction``_torus_xbarb_in_ctrl_net_packet_rx), \
@@ -608,47 +628,59 @@ assign ``direction``_packet_tx = torus_xbarb_``direction``_packet_tx;
 
 
   `define CREATE_TORUS_XBAR(xid, yid, max_x, max_y, prefer_vertical, vertical_torus) \
-logic        torus_xbar_``xid``_``yid``_north_stall_tx; \
-logic        torus_xbar_``xid``_``yid``_north_en_tx; \
-net_packet_t torus_xbar_``xid``_``yid``_north_packet_tx; \
-logic        torus_xbar_``xid``_``yid``_north_stall_rx; \
-logic        torus_xbar_``xid``_``yid``_north_en_rx; \
-net_packet_t torus_xbar_``xid``_``yid``_north_packet_rx; \
-logic        torus_xbar_``xid``_``yid``_south_stall_tx; \
-logic        torus_xbar_``xid``_``yid``_south_en_tx; \
-net_packet_t torus_xbar_``xid``_``yid``_south_packet_tx; \
-logic        torus_xbar_``xid``_``yid``_south_stall_rx; \
-logic        torus_xbar_``xid``_``yid``_south_en_rx; \
-net_packet_t torus_xbar_``xid``_``yid``_south_packet_rx; \
-logic        torus_xbar_``xid``_``yid``_east_stall_tx; \
-logic        torus_xbar_``xid``_``yid``_east_en_tx; \
-net_packet_t torus_xbar_``xid``_``yid``_east_packet_tx; \
-logic        torus_xbar_``xid``_``yid``_east_stall_rx; \
-logic        torus_xbar_``xid``_``yid``_east_en_rx; \
-net_packet_t torus_xbar_``xid``_``yid``_east_packet_rx; \
-logic        torus_xbar_``xid``_``yid``_west_stall_tx; \
-logic        torus_xbar_``xid``_``yid``_west_en_tx; \
-net_packet_t torus_xbar_``xid``_``yid``_west_packet_tx; \
-logic        torus_xbar_``xid``_``yid``_west_stall_rx; \
-logic        torus_xbar_``xid``_``yid``_west_en_rx; \
-net_packet_t torus_xbar_``xid``_``yid``_west_packet_rx; \
-logic        torus_xbar_``xid``_``yid``_torus_stall_tx; \
-logic        torus_xbar_``xid``_``yid``_torus_en_tx; \
-net_packet_t torus_xbar_``xid``_``yid``_torus_packet_tx; \
-logic        torus_xbar_``xid``_``yid``_torus_stall_rx; \
-logic        torus_xbar_``xid``_``yid``_torus_en_rx; \
-net_packet_t torus_xbar_``xid``_``yid``_torus_packet_rx; \
+endpoint_id_t torus_xbar_``xid``_``yid``_strap_pos_x; \
+endpoint_id_t torus_xbar_``xid``_``yid``_strap_pos_y; \
+endpoint_id_t torus_xbar_``xid``_``yid``_strap_max_x; \
+endpoint_id_t torus_xbar_``xid``_``yid``_strap_max_y; \
+logic         torus_xbar_``xid``_``yid``_strap_vertical_torus; \
+logic         torus_xbar_``xid``_``yid``_strap_prefer_vertical; \
+logic         torus_xbar_``xid``_``yid``_north_stall_tx; \
+logic         torus_xbar_``xid``_``yid``_north_en_tx; \
+net_packet_t  torus_xbar_``xid``_``yid``_north_packet_tx; \
+logic         torus_xbar_``xid``_``yid``_north_stall_rx; \
+logic         torus_xbar_``xid``_``yid``_north_en_rx; \
+net_packet_t  torus_xbar_``xid``_``yid``_north_packet_rx; \
+logic         torus_xbar_``xid``_``yid``_south_stall_tx; \
+logic         torus_xbar_``xid``_``yid``_south_en_tx; \
+net_packet_t  torus_xbar_``xid``_``yid``_south_packet_tx; \
+logic         torus_xbar_``xid``_``yid``_south_stall_rx; \
+logic         torus_xbar_``xid``_``yid``_south_en_rx; \
+net_packet_t  torus_xbar_``xid``_``yid``_south_packet_rx; \
+logic         torus_xbar_``xid``_``yid``_east_stall_tx; \
+logic         torus_xbar_``xid``_``yid``_east_en_tx; \
+net_packet_t  torus_xbar_``xid``_``yid``_east_packet_tx; \
+logic         torus_xbar_``xid``_``yid``_east_stall_rx; \
+logic         torus_xbar_``xid``_``yid``_east_en_rx; \
+net_packet_t  torus_xbar_``xid``_``yid``_east_packet_rx; \
+logic         torus_xbar_``xid``_``yid``_west_stall_tx; \
+logic         torus_xbar_``xid``_``yid``_west_en_tx; \
+net_packet_t  torus_xbar_``xid``_``yid``_west_packet_tx; \
+logic         torus_xbar_``xid``_``yid``_west_stall_rx; \
+logic         torus_xbar_``xid``_``yid``_west_en_rx; \
+net_packet_t  torus_xbar_``xid``_``yid``_west_packet_rx; \
+logic         torus_xbar_``xid``_``yid``_torus_stall_tx; \
+logic         torus_xbar_``xid``_``yid``_torus_en_tx; \
+net_packet_t  torus_xbar_``xid``_``yid``_torus_packet_tx; \
+logic         torus_xbar_``xid``_``yid``_torus_stall_rx; \
+logic         torus_xbar_``xid``_``yid``_torus_en_rx; \
+net_packet_t  torus_xbar_``xid``_``yid``_torus_packet_rx; \
+assign torus_xbar_``xid``_``yid``_strap_pos_x = endpoint_id_t'(xid); \
+assign torus_xbar_``xid``_``yid``_strap_pos_y = endpoint_id_t'(yid); \
+assign torus_xbar_``xid``_``yid``_strap_max_x = endpoint_id_t'(max_x); \
+assign torus_xbar_``xid``_``yid``_strap_max_y = endpoint_id_t'(max_y); \
+assign torus_xbar_``xid``_``yid``_strap_vertical_torus = vertical_torus; \
+assign torus_xbar_``xid``_``yid``_strap_prefer_vertical = prefer_vertical; \
 torus_xbar #( \
-    .POS_X(xid), \
-    .POS_Y(yid), \
-    .MAX_X(max_x), \
-    .MAX_Y(max_y), \
-    .PREFER_VERTICAL(prefer_vertical), \
-    .BufferRxDepth(BufferRxDepth), \
-    .VERTICAL_TORUS(vertical_torus) \
+    .BufferRxDepth(BufferRxDepth) \
 ) torus_xbar_``xid``_``yid`` ( \
     .CLK(CLK), \
     .nRST(nRST), \
+    .strap_pos_x(torus_xbar_``xid``_``yid``_strap_pos_x), \
+    .strap_pos_y(torus_xbar_``xid``_``yid``_strap_pos_y), \
+    .strap_max_x(torus_xbar_``xid``_``yid``_strap_max_x), \
+    .strap_max_y(torus_xbar_``xid``_``yid``_strap_max_y), \
+    .strap_vertical_torus(torus_xbar_``xid``_``yid``_strap_vertical_torus), \
+    .strap_prefer_vertical(torus_xbar_``xid``_``yid``_strap_prefer_vertical), \
     .north_stall_tx(torus_xbar_``xid``_``yid``_north_stall_tx), \
     .north_en_tx(torus_xbar_``xid``_``yid``_north_en_tx), \
     .north_packet_tx(torus_xbar_``xid``_``yid``_north_packet_tx), \

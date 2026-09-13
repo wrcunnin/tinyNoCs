@@ -23,13 +23,15 @@ import packet_pkg::*;
 module endpoint #(
     parameter int TxBufferDepth,
     parameter int RxBufferDepth,
-    parameter int EndpointIdX,
-    parameter int EndpointIdY,
-    parameter network_type_t NetworkType = 0
+    parameter network_type_t NetworkType = kRing
 ) (
     // Clock, async reset
     input logic CLK,
     input logic nRST,
+
+    // Straps
+    input endpoint_id_t strap_endpoint_id_x,
+    input endpoint_id_t strap_endpoint_id_y,
 
     ////////////////////////////////////////////////////////
     // Requester sending data
@@ -266,22 +268,22 @@ module endpoint #(
   net_packet_t        tx_arbiter_net_packet;
 
   endpoint_tx_arbiter #(
-      .EndpointIdX(EndpointIdX),
-      .EndpointIdY(EndpointIdY),
       .NetworkType(NetworkType)
   ) tx_arbiter (
-      .CLK(CLK),
-      .nRST(nRST),
-      .req_stall(tx_arbiter_req_stall),
-      .req_en(tx_arbiter_req_en),
-      .req_packet(tx_arbiter_req_packet),
-      .resp_stall(tx_arbiter_resp_stall),
-      .resp_en(tx_arbiter_resp_en),
-      .resp_return_id(tx_arbiter_resp_return_id),
-      .resp_packet(tx_arbiter_resp_packet),
-      .net_en(tx_arbiter_net_en),
-      .net_stall(tx_arbiter_net_stall),
-      .net_packet(tx_arbiter_net_packet)
+      .CLK,
+      .nRST,
+      .strap_endpoint_id_x,
+      .strap_endpoint_id_y,
+      .req_stall               (tx_arbiter_req_stall),
+      .req_en                  (tx_arbiter_req_en),
+      .req_packet              (tx_arbiter_req_packet),
+      .resp_stall              (tx_arbiter_resp_stall),
+      .resp_en                 (tx_arbiter_resp_en),
+      .resp_return_id          (tx_arbiter_resp_return_id),
+      .resp_packet             (tx_arbiter_resp_packet),
+      .net_en                  (tx_arbiter_net_en),
+      .net_stall               (tx_arbiter_net_stall),
+      .net_packet              (tx_arbiter_net_packet)
   );
 
 

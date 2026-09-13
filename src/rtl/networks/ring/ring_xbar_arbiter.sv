@@ -10,12 +10,14 @@ Description:
 
 import packet_pkg::*;
 
-module ring_xbar_arbiter #(
-    parameter int unsigned EndpointId
-) (
+module ring_xbar_arbiter (
     // Clock, async reset
     input logic CLK,
     input logic nRST,
+
+    ////////////////////////////////////////////////////////
+    // Straps
+    input endpoint_id_t strap_endpoint_id,
 
     ////////////////////////////////////////////////////////
     // From Ring Crossbar
@@ -79,7 +81,7 @@ module ring_xbar_arbiter #(
 
   // Determines if the incoming network packet is intended for the endpoint
   logic net_dest_match;
-  assign net_dest_match = net_en_rx && (endpoint_id_t'(EndpointId) == net_packet_rx.dst_id[0]);
+  assign net_dest_match = net_en_rx && (strap_endpoint_id == net_packet_rx.dst_id[0]);
 
   always_comb begin : packetSelection
     selected = RXBAR_NONE;

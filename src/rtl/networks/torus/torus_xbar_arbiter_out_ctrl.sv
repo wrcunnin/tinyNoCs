@@ -40,6 +40,13 @@ module torus_xbar_arbiter_out_ctrl (
   logic [2:0] input_to_send_idx;
   logic is0gt1, is0gt2, is0gt3, is1gt2, is1gt3, is2gt3;
 
+  function automatic lru_state_t updateTorusLRU;
+    input logic cond1;
+    input logic cond2;
+
+    updateTorusLRU = cond1 && cond2 ? 2'd3 : cond1 ^ cond2 ? 2'd2 : 2'd1;
+  endfunction
+
   assign is0gt1 = lru[0] > lru[1];
   assign is0gt2 = lru[0] > lru[2];
   assign is0gt3 = lru[0] > lru[3];
@@ -166,12 +173,5 @@ module torus_xbar_arbiter_out_ctrl (
       net_stall_rx[input_to_send_idx] = 0;
     end
   end
-
-  function lru_state_t updateTorusLRU;
-    input logic cond1;
-    input logic cond2;
-
-    updateTorusLRU = cond1 && cond2 ? 2'd3 : cond1 ^ cond2 ? 2'd2 : 2'd1;
-  endfunction
 
 endmodule

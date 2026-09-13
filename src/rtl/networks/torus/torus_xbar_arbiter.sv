@@ -4,21 +4,24 @@ Author: William Cunningham
 Date  : 04/18/2026
 
 Description:
-    Arbitrates packets from cardinal directions and 
+    Arbitrates packets from cardinal directions and toroidal connections
 
 */
 
 import packet_pkg::*;
 
-module torus_xbar_arbiter #(
-    parameter int unsigned POS_X,
-    parameter int unsigned POS_Y,
-    parameter int unsigned MAX_X,
-    parameter int unsigned MAX_Y,
-    parameter PREFER_VERTICAL = 0,
-    parameter VERTICAL_TORUS = 0
-) (
+module torus_xbar_arbiter (
     input logic CLK, nRST,
+
+    ////////////////////////////////////////////////////////
+    // Straps
+    input endpoint_id_t strap_pos_x,
+    input endpoint_id_t strap_pos_y,
+    input endpoint_id_t strap_max_x,
+    input endpoint_id_t strap_max_y,
+
+    input logic         strap_vertical_torus,
+    input logic         strap_prefer_vertical,
 
     ////////////////////////////////////////////////////////
     // North inputs/outputs

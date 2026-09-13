@@ -1,13 +1,17 @@
 module torus_xbar #(
-    parameter int unsigned POS_X,
-    parameter int unsigned POS_Y,
-    parameter int unsigned MAX_X,
-    parameter int unsigned MAX_Y,
-    parameter int unsigned BufferRxDepth,
-    parameter PREFER_VERTICAL = 0,
-    parameter VERTICAL_TORUS = 0
+    parameter int unsigned BufferRxDepth
 ) (
     input logic CLK, nRST,
+
+    ////////////////////////////////////////////////////////
+    // Straps
+    input endpoint_id_t strap_pos_x,
+    input endpoint_id_t strap_pos_y,
+    input endpoint_id_t strap_max_x,
+    input endpoint_id_t strap_max_y,
+
+    input logic         strap_vertical_torus,
+    input logic         strap_prefer_vertical,
 
     ////////////////////////////////////////////////////////
     // North inputs/outputs
@@ -178,16 +182,15 @@ net_packet_t torus_xbarb_torus_packet_tx;
 logic        torus_xbarb_torus_stall_rx;
 logic        torus_xbarb_torus_en_rx;
 net_packet_t torus_xbarb_torus_packet_rx;
-torus_xbar_arbiter #(
-    .POS_X(POS_X),
-    .POS_Y(POS_Y),
-    .MAX_X(MAX_X),
-    .MAX_Y(MAX_Y),
-    .PREFER_VERTICAL(PREFER_VERTICAL),
-    .VERTICAL_TORUS(VERTICAL_TORUS)
-) torus_xbarb (
-    .CLK(CLK),
+torus_xbar_arbiter torus_xbarb (
+    .CLK(nRST),
     .nRST(nRST),
+    .strap_pos_x(strap_pos_x),
+    .strap_pos_y(strap_pos_y),
+    .strap_max_x(strap_max_x),
+    .strap_max_y(strap_max_y),
+    .strap_vertical_torus(strap_vertical_torus),
+    .strap_prefer_vertical(strap_prefer_vertical),
     .north_stall_tx(torus_xbarb_north_stall_tx),
     .north_en_tx(torus_xbarb_north_en_tx),
     .north_packet_tx(torus_xbarb_north_packet_tx),

@@ -10,15 +10,17 @@ Description:
 
 import packet_pkg::*;
 
-module mesh_xbar_arbiter_in_ctrl #(
-    parameter int unsigned POS_X,
-    parameter int unsigned POS_Y,
-    parameter int unsigned MIN_X = 1,
-    parameter int unsigned MIN_Y = 1,
-    parameter int unsigned MAX_X,
-    parameter int unsigned MAX_Y,
-    parameter PREFER_VERTICAL = 0
-) (
+module mesh_xbar_arbiter_in_ctrl (
+    // Straps
+    input endpoint_id_t strap_pos_x,
+    input endpoint_id_t strap_pos_y,
+    input endpoint_id_t strap_min_x,
+    input endpoint_id_t strap_min_y,
+    input endpoint_id_t strap_max_x,
+    input endpoint_id_t strap_max_y,
+
+    input logic         strap_prefer_vertical,
+
     // Stalls the receiver data
     output logic net_stall_rx,
 
@@ -43,10 +45,10 @@ module mesh_xbar_arbiter_in_ctrl #(
 
   logic north, south, east, west;
 
-  assign north = net_packet_rx.dst_id[1] < POS_Y;
-  assign south = net_packet_rx.dst_id[1] > POS_Y;
-  assign east  = net_packet_rx.dst_id[0] > POS_X;
-  assign west  = net_packet_rx.dst_id[0] < POS_X;
+  assign north = net_packet_rx.dst_id[1] < strap_pos_y;
+  assign south = net_packet_rx.dst_id[1] > strap_pos_y;
+  assign east  = net_packet_rx.dst_id[0] > strap_pos_x;
+  assign west  = net_packet_rx.dst_id[0] < strap_pos_x;
 
   always_comb begin : DIR_CTRL
     north_en_rx = 0;
@@ -69,17 +71,17 @@ module mesh_xbar_arbiter_in_ctrl #(
         4'b1010: begin
           // We are at the eastern edge of the network,
           // We cannot issue east until we get aligned North
-          if (POS_X == MAX_X) begin
+          if (strap_pos_x == strap_max_x) begin
             north_en_rx = 1;
           end  // We are at the northern edge of the network
                // We cannot issue east until we get aligned East
-          else if (POS_Y == MIN_Y) begin
+          else if (strap_pos_y == strap_min_y) begin
             east_en_rx = 1;
           end  // We are in a central mesh node and we should traverse depending
                // on the direction preference assigned to this xbar
           else begin
-            north_en_rx = PREFER_VERTICAL ? 1 : 0;
-            east_en_rx  = PREFER_VERTICAL ? 0 : 1;
+            north_en_rx = strap_prefer_vertical ? 1 : 0;
+            east_en_rx  = strap_prefer_vertical ? 0 : 1;
           end
         end
 
@@ -87,17 +89,17 @@ module mesh_xbar_arbiter_in_ctrl #(
         4'b1001: begin
           // We are at the Western edge of the network,
           // We cannot issue West until we get aligned North
-          if (POS_X == MIN_X) begin
+          if (strap_pos_x == strap_min_x) begin
             north_en_rx = 1;
           end  // We are at the northern edge of the network
                // We cannot issue east until we get aligned Wast
-          else if (POS_Y == MIN_Y) begin
+          else if (strap_pos_y == strap_min_y) begin
             west_en_rx = 1;
           end  // We are in a central mesh node and we should traverse depending
                // on the direction preference assigned to this xbar
           else begin
-            north_en_rx = PREFER_VERTICAL ? 1 : 0;
-            west_en_rx  = PREFER_VERTICAL ? 0 : 1;
+            north_en_rx = strap_prefer_vertical ? 1 : 0;
+            west_en_rx  = strap_prefer_vertical ? 0 : 1;
           end
         end
 
@@ -105,17 +107,17 @@ module mesh_xbar_arbiter_in_ctrl #(
         4'b0110: begin
           // We are at the eastern edge of the network,
           // We cannot issue east until we get aligned South
-          if (POS_X == MAX_X) begin
+          if (strap_pos_x == strap_max_x) begin
             south_en_rx = 1;
           end  // We are at the southern edge of the network
                // We cannot issue east until we get aligned East
-          else if (POS_Y == MAX_Y) begin
+          else if (strap_pos_y == strap_max_y) begin
             east_en_rx = 1;
           end  // We are in a central mesh node and we should traverse depending
                // on the direction preference assigned to this xbar
           else begin
-            south_en_rx = PREFER_VERTICAL ? 1 : 0;
-            east_en_rx  = PREFER_VERTICAL ? 0 : 1;
+            south_en_rx = strap_prefer_vertical ? 1 : 0;
+            east_en_rx  = strap_prefer_vertical ? 0 : 1;
           end
         end
 
@@ -123,17 +125,17 @@ module mesh_xbar_arbiter_in_ctrl #(
         4'b0101: begin
           // We are at the Western edge of the network,
           // We cannot issue West until we get aligned South
-          if (POS_X == MIN_X) begin
+          if (strap_pos_x == strap_min_x) begin
             south_en_rx = 1;
           end  // We are at the southern edge of the network
                // We cannot issue east until we get aligned Wast
-          else if (POS_Y == MAX_Y) begin
+          else if (strap_pos_y == strap_max_y) begin
             west_en_rx = 1;
           end  // We are in a central mesh node and we should traverse depending
                // on the direction preference assigned to this xbar
           else begin
-            south_en_rx = PREFER_VERTICAL ? 1 : 0;
-            west_en_rx  = PREFER_VERTICAL ? 0 : 1;
+            south_en_rx = strap_prefer_vertical ? 1 : 0;
+            west_en_rx  = strap_prefer_vertical ? 0 : 1;
           end
         end
 

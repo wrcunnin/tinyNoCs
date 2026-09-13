@@ -10,14 +10,17 @@ Description:
 
 import packet_pkg::*;
 
-module mesh_xbar_arbiter #(
-    parameter int unsigned POS_X,
-    parameter int unsigned POS_Y,
-    parameter int unsigned MAX_X,
-    parameter int unsigned MAX_Y,
-    parameter PREFER_VERTICAL = 0
-) (
+module mesh_xbar_arbiter (
     input logic CLK, nRST,
+
+    ////////////////////////////////////////////////////////
+    // Straps
+    input endpoint_id_t strap_pos_x,
+    input endpoint_id_t strap_pos_y,
+    input endpoint_id_t strap_max_x,
+    input endpoint_id_t strap_max_y,
+
+    input logic         strap_prefer_vertical,
 
     ////////////////////////////////////////////////////////
     // North inputs/outputs

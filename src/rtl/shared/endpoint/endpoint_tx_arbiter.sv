@@ -10,12 +10,14 @@ Description:
 import packet_pkg::*;
 
 module endpoint_tx_arbiter #(
-    parameter int EndpointIdX,
-    parameter int EndpointIdY,
     parameter network_type_t NetworkType = 0
 ) (
     // Clock, async reset
     input logic CLK, nRST,
+
+    // Straps
+    input endpoint_id_t strap_endpoint_id_x,
+    input endpoint_id_t strap_endpoint_id_y,
 
     ////////////////////////////////////////////////////////
     // Requester sending data
@@ -97,8 +99,8 @@ always_comb begin : packetCreation
     resp_stall = 1;
     net_en = 0;
     net_packet = '0;
-    net_packet.src_id[0] = endpoint_id_t'(EndpointIdX);
-    net_packet.src_id[1] = endpoint_id_t'(EndpointIdY);
+    net_packet.src_id[0] = strap_endpoint_id_x;
+    net_packet.src_id[1] = strap_endpoint_id_y;
 
     // The requester has been selected
     // - We enable the network send signal
@@ -131,7 +133,7 @@ always_comb begin : packetCreation
 end
 
 endpoint_id_t endpoint_idx;
-assign endpoint_idx = req_packet.addr[(AddressWidth-1):(AddressWidth-EndpointIdBits)];
+assign endpoint_idx = req_packet.addr[(AddressWidth-1)-:EndpointIdBits];
 
 generate
     if (NetworkType == kRing) begin

@@ -1,12 +1,16 @@
 module mesh_xbar #(
-    parameter int unsigned POS_X,
-    parameter int unsigned POS_Y,
-    parameter int unsigned MAX_X,
-    parameter int unsigned MAX_Y,
-    parameter int unsigned BufferRxDepth,
-    parameter PREFER_VERTICAL = 0
+    parameter int unsigned BufferRxDepth
 ) (
     input logic CLK, nRST,
+
+    ////////////////////////////////////////////////////////
+    // Straps
+    input endpoint_id_t strap_pos_x,
+    input endpoint_id_t strap_pos_y,
+    input endpoint_id_t strap_max_x,
+    input endpoint_id_t strap_max_y,
+
+    input logic         strap_prefer_vertical,
 
     ////////////////////////////////////////////////////////
     // North inputs/outputs
@@ -144,15 +148,14 @@ net_packet_t mesh_xbarb_west_packet_tx;
 logic        mesh_xbarb_west_stall_rx;
 logic        mesh_xbarb_west_en_rx;
 net_packet_t mesh_xbarb_west_packet_rx;
-mesh_xbar_arbiter #(
-    .POS_X(POS_X),
-    .POS_Y(POS_Y),
-    .MAX_X(MAX_X),
-    .MAX_Y(MAX_Y),
-    .PREFER_VERTICAL(PREFER_VERTICAL)
-) mesh_xbarb (
-    .CLK(CLK),
-    .nRST(nRST),
+mesh_xbar_arbiter mesh_xbarb (
+    .CLK,
+    .nRST,
+    .strap_pos_x,
+    .strap_pos_y,
+    .strap_max_x,
+    .strap_max_y,
+    .strap_prefer_vertical,
     .north_stall_tx(mesh_xbarb_north_stall_tx),
     .north_en_tx(mesh_xbarb_north_en_tx),
     .north_packet_tx(mesh_xbarb_north_packet_tx),

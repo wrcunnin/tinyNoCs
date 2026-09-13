@@ -11,13 +11,16 @@ Description:
 import packet_pkg::*;
 
 module ring_xbar #(
-    parameter int unsigned EndpointId,
-    parameter int NetBufferRxDepth = 8,
-    parameter int EpBufferRxDepth = 8
+    parameter int unsigned NetBufferRxDepth = 8,
+    parameter int unsigned EpBufferRxDepth = 8
 ) (
     // Clock, async reset
     input logic CLK,
     input logic nRST,
+
+    ////////////////////////////////////////////////////////
+    // Straps
+    input endpoint_id_t strap_endpoint_id,
 
     ////////////////////////////////////////////////////////
     // From Ring Crossbar
@@ -130,11 +133,10 @@ module ring_xbar #(
   logic        xbarb_endpoint_stall_tx;
   logic        xbarb_endpoint_en_tx;
   net_packet_t xbarb_endpoint_packet_tx;
-  ring_xbar_arbiter #(
-      .EndpointId(EndpointId)
-  ) xbarb (
-      .CLK(CLK),
-      .nRST(nRST),
+  ring_xbar_arbiter xbarb (
+      .CLK,
+      .nRST,
+      .strap_endpoint_id,
       .net_stall_rx(xbarb_net_stall_rx),
       .net_en_rx(xbarb_net_en_rx),
       .net_packet_rx(xbarb_net_packet_rx),
