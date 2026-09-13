@@ -50,7 +50,7 @@ module endpoint_rx_arbiter (
     input net_packet_t net_packet
 );
 
-always_comb begin : packetSelection
+  always_comb begin : packetSelection
     req_en = 0;
     req_packet = '0;
     req_return_id = '0;
@@ -60,25 +60,22 @@ always_comb begin : packetSelection
     net_stall = 1;
 
     if (net_en) begin
-        // If an incoming packet is a request, it goes to the response FIFO
-        // - We are receiving data from an external endpoint
-        if (net_packet.request) begin
-            resp_en = 1;
-            resp_packet = net_packet.packet;
-            resp_return_id = net_packet.src_id;
-            net_stall = resp_stall;
-        end
-        // If an incoming packet is not a request, it goes to the request FIFO
-        // - We are receiving data we requested/acknowledged
-        else if (!net_packet.request) begin
-            req_en = 1;
-            req_packet = net_packet.packet;
-            req_return_id = net_packet.src_id;
-            net_stall = req_stall;
-        end
-        else
-            assert(0);
+      // If an incoming packet is a request, it goes to the response FIFO
+      // - We are receiving data from an external endpoint
+      if (net_packet.request) begin
+        resp_en = 1;
+        resp_packet = net_packet.packet;
+        resp_return_id = net_packet.src_id;
+        net_stall = resp_stall;
+      end  // If an incoming packet is not a request, it goes to the request FIFO
+           // - We are receiving data we requested/acknowledged
+      else if (!net_packet.request) begin
+        req_en = 1;
+        req_packet = net_packet.packet;
+        req_return_id = net_packet.src_id;
+        net_stall = req_stall;
+      end else assert (0);
     end
-end
+  end
 
 endmodule

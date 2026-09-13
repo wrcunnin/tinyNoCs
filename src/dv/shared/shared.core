@@ -53,8 +53,8 @@ targets:
     tools:
       verilator:
         verilator_options_append:
-          - -GTX_BUFFER_DEPTH=8
-          - -GRX_BUFFER_DEPTH=8
+          - -GTxBufferDepth=8
+          - -GRxBufferDepth=8
           - -GENDPOINT_ADDR=2147487744
 
   ###################################
@@ -74,7 +74,7 @@ targets:
     tools:
       verilator:
         verilator_options_append:
-          - -GDEPTH=10
+          - -GDepth=10
 
   tb_fifo_basic_64:
     <<: *default
@@ -84,7 +84,7 @@ targets:
     tools:
       verilator:
         verilator_options_append:
-          - -GDEPTH=64
+          - -GDepth=64
 
   ###################################
   # FIFO Router Test Benches
@@ -103,7 +103,7 @@ targets:
     tools:
       verilator:
         verilator_options_append:
-          - -GDEPTH=10
+          - -GDepth=10
 
   tb_fifo_rob_64:
     <<: *default
@@ -113,5 +113,5 @@ targets:
     tools:
       verilator:
         verilator_options_append:
-          - -GDEPTH=64
+          - -GDepth=64
 

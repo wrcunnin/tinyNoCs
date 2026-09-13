@@ -12,14 +12,16 @@ Description:
 import packet_pkg::*;
 
 module fifo_rob #(
-    parameter int DEPTH = 8,
-    localparam int DEPTH_BITS = $clog2(DEPTH)
+    parameter int Depth = 8,
+    localparam int DepthBits = $clog2(Depth)
 ) (
     // Clock, async reset
-    input logic CLK, nRST,
+    input logic CLK,
+    input logic nRST,
 
     // Indicating if the buffer is full and empty
-    output logic fifo_rob_full, fifo_rob_empty,
+    output logic fifo_rob_full,
+    output logic fifo_rob_empty,
 
     ////////////////////////////////////////////////////////
     // Requester sending data
@@ -68,17 +70,33 @@ typedef struct packed {
 } fifo_rob_entry_t;
 
 // FIFO buffer
-fifo_rob_entry_t [DEPTH-1:0] fifo_rob_buffer, next_fifo_rob_buffer;
+fifo_rob_entry_t [Depth-1:0] fifo_rob_buffer, next_fifo_rob_buffer;
 
 // Requester and Network pointers within buffer
 // TODO: Is there any way for this to work without a 3rd pointer?
 //       I'm not sure there is. If I end up muxing the return packets, then no.
 //       We need to stall the issuing, but we can still commit entries.
-logic [DEPTH_BITS-1:0] req_pointer, next_req_pointer;
-logic [DEPTH_BITS-1:0] req_comp_pointer, next_req_comp_pointer;
-logic [DEPTH_BITS-1:0] net_pointer, next_net_pointer;
+logic [DepthBits-1:0] req_pointer, next_req_pointer;
+logic [DepthBits-1:0] req_comp_pointer, next_req_comp_pointer;
+logic [DepthBits-1:0] net_pointer, next_net_pointer;
 
 logic next_fifo_rob_full, next_fifo_rob_empty;
+
+function automatic logic [DepthBits-1:0] updatePointer;
+    input logic [DepthBits-1:0] pointer;
+
+    // Depth is a power of 2
+    if ($clog2(Depth) != $clog2(Depth-1))
+        updatePointer = pointer + 1;
+
+    // Depth is not a power of two, so we must do extra control
+    else begin
+        if (pointer == (Depth - 1))
+            updatePointer = 0;
+        else
+            updatePointer = pointer + 1;
+    end
+endfunction
 
 always_ff @( posedge CLK, negedge nRST ) begin : fifoRouterFF
     if (!nRST) begin
@@ -136,7 +154,10 @@ always_comb begin : entryUpdate
     // Updating the buffer from the network
     if (net_comp) begin
         // TODO: is it okay not to check for !wen here? putting assertion here for sanity
-        assert(!net_comp_packet.wen || fifo_rob_buffer[net_comp_packet.id].packet.payload == net_comp_packet.payload);
+        assert(
+            !net_comp_packet.wen
+            || fifo_rob_buffer[net_comp_packet.id].packet.payload == net_comp_packet.payload
+        );
         next_fifo_rob_buffer[net_comp_packet.id].packet.payload = net_comp_packet.payload;
         next_fifo_rob_buffer[net_comp_packet.id].valid = 1;
     end
@@ -187,7 +208,7 @@ always_comb begin : controlFullEmpty
 end
 
 `ifndef SYNTHESIS
-logic [DEPTH_BITS:0] occupancy, next_occupancy;
+logic [DepthBits:0] occupancy, next_occupancy;
 always_ff @( posedge CLK, negedge nRST ) begin
     if (!nRST)
         occupancy <= '0;
@@ -200,24 +221,8 @@ always_comb begin
         next_occupancy = next_occupancy + 1;
 
     if (req_comp && !req_comp_stall)
-        next_occupancy = next_occupancy - 1; 
+        next_occupancy = next_occupancy - 1;
 end
 `endif
-
-function logic [DEPTH_BITS-1:0] updatePointer;
-    input logic [DEPTH_BITS-1:0] pointer;
-
-    // DEPTH is a power of 2
-    if ($clog2(DEPTH) != $clog2(DEPTH-1))
-        updatePointer = pointer + 1;
-
-    // DEPTH is not a power of two, so we must do extra control
-    else begin
-        if (pointer == (DEPTH - 1))
-            updatePointer = 0;
-        else
-            updatePointer = pointer + 1;
-    end
-endfunction
 
 endmodule

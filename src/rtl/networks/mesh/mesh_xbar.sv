@@ -3,7 +3,7 @@ module mesh_xbar #(
     parameter int unsigned POS_Y,
     parameter int unsigned MAX_X,
     parameter int unsigned MAX_Y,
-    parameter int unsigned BUFFER_RX_DEPTH,
+    parameter int unsigned BufferRxDepth,
     parameter PREFER_VERTICAL = 0
 ) (
     input logic CLK, nRST,
@@ -30,13 +30,13 @@ module mesh_xbar #(
 /************************************************/
 logic                       north_buffer_rx_ren;
 logic                       north_buffer_rx_wen;
-logic [NET_PACKET_BITS-1:0] north_buffer_rx_rdata;
-logic [NET_PACKET_BITS-1:0] north_buffer_rx_wdata;
+logic [NetPacketBits-1:0] north_buffer_rx_rdata;
+logic [NetPacketBits-1:0] north_buffer_rx_wdata;
 logic                       north_buffer_rx_full;
 logic                       north_buffer_rx_empty;
 fifo_basic #(
-    .DEPTH(BUFFER_RX_DEPTH),
-    .DATA_WIDTH(NET_PACKET_BITS)
+    .Depth(BufferRxDepth),
+    .Width(NetPacketBits)
 ) north_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
@@ -53,13 +53,13 @@ fifo_basic #(
 /************************************************/
 logic                       south_buffer_rx_ren;
 logic                       south_buffer_rx_wen;
-logic [NET_PACKET_BITS-1:0] south_buffer_rx_rdata;
-logic [NET_PACKET_BITS-1:0] south_buffer_rx_wdata;
+logic [NetPacketBits-1:0] south_buffer_rx_rdata;
+logic [NetPacketBits-1:0] south_buffer_rx_wdata;
 logic                       south_buffer_rx_full;
 logic                       south_buffer_rx_empty;
 fifo_basic #(
-    .DEPTH(BUFFER_RX_DEPTH),
-    .DATA_WIDTH(NET_PACKET_BITS)
+    .Depth(BufferRxDepth),
+    .Width(NetPacketBits)
 ) south_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
@@ -76,13 +76,13 @@ fifo_basic #(
 /************************************************/
 logic                       east_buffer_rx_ren;
 logic                       east_buffer_rx_wen;
-logic [NET_PACKET_BITS-1:0] east_buffer_rx_rdata;
-logic [NET_PACKET_BITS-1:0] east_buffer_rx_wdata;
+logic [NetPacketBits-1:0] east_buffer_rx_rdata;
+logic [NetPacketBits-1:0] east_buffer_rx_wdata;
 logic                       east_buffer_rx_full;
 logic                       east_buffer_rx_empty;
 fifo_basic #(
-    .DEPTH(BUFFER_RX_DEPTH),
-    .DATA_WIDTH(NET_PACKET_BITS)
+    .Depth(BufferRxDepth),
+    .Width(NetPacketBits)
 ) east_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
@@ -99,13 +99,13 @@ fifo_basic #(
 /************************************************/
 logic                       west_buffer_rx_ren;
 logic                       west_buffer_rx_wen;
-logic [NET_PACKET_BITS-1:0] west_buffer_rx_rdata;
-logic [NET_PACKET_BITS-1:0] west_buffer_rx_wdata;
+logic [NetPacketBits-1:0] west_buffer_rx_rdata;
+logic [NetPacketBits-1:0] west_buffer_rx_wdata;
 logic                       west_buffer_rx_full;
 logic                       west_buffer_rx_empty;
 fifo_basic #(
-    .DEPTH(BUFFER_RX_DEPTH),
-    .DATA_WIDTH(NET_PACKET_BITS)
+    .Depth(BufferRxDepth),
+    .Width(NetPacketBits)
 ) west_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),

@@ -11,10 +11,11 @@ Description:
 import packet_pkg::*;
 
 module ring_xbar_arbiter #(
-    parameter int unsigned ENDPOINT_ID
+    parameter int unsigned EndpointId
 ) (
     // Clock, async reset
-    input logic CLK, nRST,
+    input logic CLK,
+    input logic nRST,
 
     ////////////////////////////////////////////////////////
     // From Ring Crossbar
@@ -61,55 +62,52 @@ module ring_xbar_arbiter #(
     output net_packet_t endpoint_packet_tx
 );
 
-typedef enum logic [1:0] { RXBAR_NONE, RXBAR_EP, RXBAR_NET } ring_xbar_arbiter_lru_state_t;
+  typedef enum logic [1:0] {
+    RXBAR_NONE,
+    RXBAR_EP,
+    RXBAR_NET
+  } ring_xbar_arbiter_lru_state_t;
 
-ring_xbar_arbiter_lru_state_t lru, next_lru, selected;
+  ring_xbar_arbiter_lru_state_t lru, next_lru, selected;
 
-always_ff @( posedge CLK, negedge nRST ) begin : RXBAR_LRU
-    if (!nRST)
-        lru <= RXBAR_EP;
+  always_ff @(posedge CLK, negedge nRST) begin : RXBAR_LRU
+    if (!nRST) lru <= RXBAR_EP;
 
     // if the network is enabled & there's no stall, update the LRU state
-    else if (net_en_tx && !net_stall_tx)
-        lru <= next_lru;
-end
+    else if (net_en_tx && !net_stall_tx) lru <= next_lru;
+  end
 
-// Determines if the incoming network packet is intended for the endpoint
-logic net_dest_match;
-assign net_dest_match = net_en_rx && (endpoint_id_t'(ENDPOINT_ID) == net_packet_rx.dst_id[0]);
+  // Determines if the incoming network packet is intended for the endpoint
+  logic net_dest_match;
+  assign net_dest_match = net_en_rx && (endpoint_id_t'(EndpointId) == net_packet_rx.dst_id[0]);
 
-always_comb begin : packetSelection
+  always_comb begin : packetSelection
     selected = RXBAR_NONE;
     next_lru = lru;
 
     // Network has data for endpoint
     if (net_dest_match) begin
+      selected = RXBAR_EP;
+      next_lru = RXBAR_NET;
+    end  // Both endpoint and network could pass data to network
+    else begin
+      // If both want to send
+      if (endpoint_en_rx && net_en_rx) begin
+        selected = lru;
+        next_lru = lru == RXBAR_EP ? RXBAR_NET : RXBAR_EP;
+      end  // If the requester is wanting to send & responder has nothing to send
+      else if (endpoint_en_rx && !net_en_rx) begin
         selected = RXBAR_EP;
         next_lru = RXBAR_NET;
+      end  // If the responder is wanting to send & requester has nothing to send
+      else if (!endpoint_en_rx && net_en_rx) begin
+        selected = RXBAR_NET;
+        next_lru = RXBAR_EP;
+      end
     end
-    // Both endpoint and network could pass data to network
-    else begin
-        // If both want to send
-        if (endpoint_en_rx && net_en_rx) begin
-            selected = lru;
-            next_lru = lru == RXBAR_EP ? RXBAR_NET : RXBAR_EP;
-        end
+  end
 
-        // If the requester is wanting to send & responder has nothing to send
-        else if (endpoint_en_rx && !net_en_rx) begin
-            selected = RXBAR_EP;
-            next_lru = RXBAR_NET;
-        end
-
-        // If the responder is wanting to send & requester has nothing to send
-        else if (!endpoint_en_rx && net_en_rx) begin
-            selected = RXBAR_NET;
-            next_lru = RXBAR_EP;
-        end
-    end
-end
-
-always_comb begin : packetRouting
+  always_comb begin : packetRouting
     net_stall_rx = 1;
     net_en_tx = 0;
     net_packet_tx = '0;
@@ -119,25 +117,23 @@ always_comb begin : packetRouting
 
     // If xbar is receiving a packet from the network for the attached endpoint
     if (net_dest_match) begin
-        net_en_tx = endpoint_en_rx;
-        net_packet_tx = endpoint_packet_rx;
-        endpoint_stall_rx = net_stall_tx;
-        endpoint_en_tx = net_en_rx;
-        endpoint_packet_tx = net_packet_rx;
-        net_stall_rx = endpoint_stall_tx;
-    end
-    // Both endpoint and network may want to put packets in the FIFO,
-    // so we must respect what got selected
+      net_en_tx = endpoint_en_rx;
+      net_packet_tx = endpoint_packet_rx;
+      endpoint_stall_rx = net_stall_tx;
+      endpoint_en_tx = net_en_rx;
+      endpoint_packet_tx = net_packet_rx;
+      net_stall_rx = endpoint_stall_tx;
+    end  // Both endpoint and network may want to put packets in the FIFO,
+         // so we must respect what got selected
     else if (selected == RXBAR_EP) begin
-        net_en_tx = 1;
-        net_packet_tx = endpoint_packet_rx;
-        endpoint_stall_rx = net_stall_tx;
+      net_en_tx = 1;
+      net_packet_tx = endpoint_packet_rx;
+      endpoint_stall_rx = net_stall_tx;
+    end else if (selected == RXBAR_NET) begin
+      net_en_tx = 1;
+      net_packet_tx = net_packet_rx;
+      net_stall_rx = net_stall_tx;
     end
-    else if (selected == RXBAR_NET) begin
-        net_en_tx = 1;
-        net_packet_tx = net_packet_rx;
-        net_stall_rx = net_stall_tx;
-    end
-end
+  end
 
 endmodule

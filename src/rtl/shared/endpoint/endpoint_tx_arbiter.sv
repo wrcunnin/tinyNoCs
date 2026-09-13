@@ -10,10 +10,9 @@ Description:
 import packet_pkg::*;
 
 module endpoint_tx_arbiter #(
-    parameter int ENDPOINT_ID_X,
-    parameter int ENDPOINT_ID_Y,
-    parameter int IS_RING = 0,
-    parameter int IS_MESH = 0
+    parameter int EndpointIdX,
+    parameter int EndpointIdY,
+    parameter network_type_t NetworkType = 0
 ) (
     // Clock, async reset
     input logic CLK, nRST,
@@ -98,8 +97,8 @@ always_comb begin : packetCreation
     resp_stall = 1;
     net_en = 0;
     net_packet = '0;
-    net_packet.src_id[0] = endpoint_id_t'(ENDPOINT_ID_X);
-    net_packet.src_id[1] = endpoint_id_t'(ENDPOINT_ID_Y);
+    net_packet.src_id[0] = endpoint_id_t'(EndpointIdX);
+    net_packet.src_id[1] = endpoint_id_t'(EndpointIdY);
 
     // The requester has been selected
     // - We enable the network send signal
@@ -132,23 +131,23 @@ always_comb begin : packetCreation
 end
 
 endpoint_id_t endpoint_idx;
-assign endpoint_idx = req_packet.addr[(ADDRESS_BITS-1):(ADDRESS_BITS-ENDPOINT_ID_BITS)];
+assign endpoint_idx = req_packet.addr[(AddressWidth-1):(AddressWidth-EndpointIdBits)];
 
 generate
-    if (IS_RING) begin
+    if (NetworkType == kRing) begin
         // HACK: Is this always going to be right? Need to have 2**power aligned number of endpoints...
         //       I am the designer and I say this is okay! If you get upset about it,
         //       please do not send your regards.
         assign dst_id[0] = endpoint_idx;
         assign dst_id[1] = 0;
     end
-    else if (IS_MESH) begin
+    else if (NetworkType == kMesh) begin
         `ifdef USE_5x3
-        assign dst_id[0] = MESH_5x3_ENDPOINTS[endpoint_idx][0];
-        assign dst_id[1] = MESH_5x3_ENDPOINTS[endpoint_idx][1];
+        assign dst_id[0] = Mesh5x3Endpoints[endpoint_idx][0];
+        assign dst_id[1] = Mesh5x3Endpoints[endpoint_idx][1];
         `else
-        assign dst_id[0] = MESH_4x4_ENDPOINTS[endpoint_idx][0];
-        assign dst_id[1] = MESH_4x4_ENDPOINTS[endpoint_idx][1];
+        assign dst_id[0] = Mesh4x4Endpoints[endpoint_idx][0];
+        assign dst_id[1] = Mesh4x4Endpoints[endpoint_idx][1];
         `endif
     end
     else begin

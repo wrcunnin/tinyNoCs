@@ -21,20 +21,21 @@ Description:
 import packet_pkg::*;
 
 module endpoint #(
-    parameter int TX_BUFFER_DEPTH,
-    parameter int RX_BUFFER_DEPTH,
-    parameter int ENDPOINT_ID_X,
-    parameter int ENDPOINT_ID_Y,
-    parameter int IS_RING = 0,
-    parameter int IS_MESH = 0
+    parameter int TxBufferDepth,
+    parameter int RxBufferDepth,
+    parameter int EndpointIdX,
+    parameter int EndpointIdY,
+    parameter network_type_t NetworkType = 0
 ) (
     // Clock, async reset
-    input logic CLK, nRST,
+    input logic CLK,
+    input logic nRST,
 
     ////////////////////////////////////////////////////////
     // Requester sending data
     // Lets requester know if TX FIFO is full/empty
-    output logic req_full, req_empty,
+    output logic req_full,
+    output logic req_empty,
 
     // Requester wants to send a packet
     input logic req_en,
@@ -57,7 +58,8 @@ module endpoint #(
     input logic resp_stall,
 
     // Lets responder know if RX FIFO is full/empty
-    output logic resp_full, resp_empty,
+    output logic resp_full,
+    output logic resp_empty,
 
     // Initiates the responder to begin servicing this request
     output logic resp_en,
@@ -98,244 +100,243 @@ module endpoint #(
 );
 
 
-/************************************************/
-/* endpoint_tx_buffer                           */
-/************************************************/
-logic    endpoint_tx_buffer_fifo_rob_full;
-logic    endpoint_tx_buffer_fifo_rob_empty;
-logic    endpoint_tx_buffer_req_en;
-packet_t endpoint_tx_buffer_req_packet;
-logic    endpoint_tx_buffer_req_comp;
-logic    endpoint_tx_buffer_req_comp_stall;
-packet_t endpoint_tx_buffer_req_comp_packet;
-logic    endpoint_tx_buffer_net_en;
-logic    endpoint_tx_buffer_net_stall;
-packet_t endpoint_tx_buffer_net_packet;
-logic    endpoint_tx_buffer_net_comp;
-packet_t endpoint_tx_buffer_net_comp_packet;
+  /************************************************/
+  /* endpoint_tx_buffer                           */
+  /************************************************/
+  logic    endpoint_tx_buffer_fifo_rob_full;
+  logic    endpoint_tx_buffer_fifo_rob_empty;
+  logic    endpoint_tx_buffer_req_en;
+  packet_t endpoint_tx_buffer_req_packet;
+  logic    endpoint_tx_buffer_req_comp;
+  logic    endpoint_tx_buffer_req_comp_stall;
+  packet_t endpoint_tx_buffer_req_comp_packet;
+  logic    endpoint_tx_buffer_net_en;
+  logic    endpoint_tx_buffer_net_stall;
+  packet_t endpoint_tx_buffer_net_packet;
+  logic    endpoint_tx_buffer_net_comp;
+  packet_t endpoint_tx_buffer_net_comp_packet;
 
-fifo_rob #(
-    .DEPTH(TX_BUFFER_DEPTH)
-) endpoint_tx_buffer (
-    .CLK(CLK),
-    .nRST(nRST),
-    .fifo_rob_full(endpoint_tx_buffer_fifo_rob_full),
-    .fifo_rob_empty(endpoint_tx_buffer_fifo_rob_empty),
-    .req_en(endpoint_tx_buffer_req_en),
-    .req_packet(endpoint_tx_buffer_req_packet),
-    .req_comp(endpoint_tx_buffer_req_comp),
-    .req_comp_stall(endpoint_tx_buffer_req_comp_stall),
-    .req_comp_packet(endpoint_tx_buffer_req_comp_packet),
-    .net_en(endpoint_tx_buffer_net_en),
-    .net_stall(endpoint_tx_buffer_net_stall),
-    .net_packet(endpoint_tx_buffer_net_packet),
-    .net_comp(endpoint_tx_buffer_net_comp),
-    .net_comp_packet(endpoint_tx_buffer_net_comp_packet)
-);
-
-
-/************************************************/
-/* endpoint_rx_buffer                           */
-/************************************************/
-logic    endpoint_rx_buffer_fifo_rob_full;
-logic    endpoint_rx_buffer_fifo_rob_empty;
-logic    endpoint_rx_buffer_req_en;
-packet_t endpoint_rx_buffer_req_packet;
-logic    endpoint_rx_buffer_req_comp;
-logic    endpoint_rx_buffer_req_comp_stall;
-packet_t endpoint_rx_buffer_req_comp_packet;
-logic    endpoint_rx_buffer_net_en;
-logic    endpoint_rx_buffer_net_stall;
-packet_t endpoint_rx_buffer_net_packet;
-logic    endpoint_rx_buffer_net_comp;
-packet_t endpoint_rx_buffer_net_comp_packet;
-
-fifo_rob #(
-    .DEPTH(RX_BUFFER_DEPTH)
-) endpoint_rx_buffer (
-    .CLK(CLK),
-    .nRST(nRST),
-    .fifo_rob_full(endpoint_rx_buffer_fifo_rob_full),
-    .fifo_rob_empty(endpoint_rx_buffer_fifo_rob_empty),
-    .req_en(endpoint_rx_buffer_req_en),
-    .req_packet(endpoint_rx_buffer_req_packet),
-    .req_comp(endpoint_rx_buffer_req_comp),
-    .req_comp_stall(endpoint_rx_buffer_req_comp_stall),
-    .req_comp_packet(endpoint_rx_buffer_req_comp_packet),
-    .net_en(endpoint_rx_buffer_net_en),
-    .net_stall(endpoint_rx_buffer_net_stall),
-    .net_packet(endpoint_rx_buffer_net_packet),
-    .net_comp(endpoint_rx_buffer_net_comp),
-    .net_comp_packet(endpoint_rx_buffer_net_comp_packet)
-);
+  fifo_rob #(
+      .Depth(TxBufferDepth)
+  ) endpoint_tx_buffer (
+      .CLK(CLK),
+      .nRST(nRST),
+      .fifo_rob_full(endpoint_tx_buffer_fifo_rob_full),
+      .fifo_rob_empty(endpoint_tx_buffer_fifo_rob_empty),
+      .req_en(endpoint_tx_buffer_req_en),
+      .req_packet(endpoint_tx_buffer_req_packet),
+      .req_comp(endpoint_tx_buffer_req_comp),
+      .req_comp_stall(endpoint_tx_buffer_req_comp_stall),
+      .req_comp_packet(endpoint_tx_buffer_req_comp_packet),
+      .net_en(endpoint_tx_buffer_net_en),
+      .net_stall(endpoint_tx_buffer_net_stall),
+      .net_packet(endpoint_tx_buffer_net_packet),
+      .net_comp(endpoint_tx_buffer_net_comp),
+      .net_comp_packet(endpoint_tx_buffer_net_comp_packet)
+  );
 
 
-/************************************************/
-/* net_rx_buffer                                */
-/************************************************/
-logic                       net_rx_buffer_ren;
-logic                       net_rx_buffer_wen;
-logic [NET_PACKET_BITS-1:0] net_rx_buffer_rdata;
-logic [NET_PACKET_BITS-1:0] net_rx_buffer_wdata;
-logic                       net_rx_buffer_full;
-logic                       net_rx_buffer_empty;
+  /************************************************/
+  /* endpoint_rx_buffer                           */
+  /************************************************/
+  logic    endpoint_rx_buffer_fifo_rob_full;
+  logic    endpoint_rx_buffer_fifo_rob_empty;
+  logic    endpoint_rx_buffer_req_en;
+  packet_t endpoint_rx_buffer_req_packet;
+  logic    endpoint_rx_buffer_req_comp;
+  logic    endpoint_rx_buffer_req_comp_stall;
+  packet_t endpoint_rx_buffer_req_comp_packet;
+  logic    endpoint_rx_buffer_net_en;
+  logic    endpoint_rx_buffer_net_stall;
+  packet_t endpoint_rx_buffer_net_packet;
+  logic    endpoint_rx_buffer_net_comp;
+  packet_t endpoint_rx_buffer_net_comp_packet;
 
-fifo_basic #(
-    .DEPTH(2*RX_BUFFER_DEPTH),
-    .DATA_WIDTH(NET_PACKET_BITS)
-) net_rx_buffer (
-    .CLK(CLK),
-    .nRST(nRST),
-    .full(net_rx_buffer_full),
-    .empty(net_rx_buffer_empty),
-    .ren(net_rx_buffer_ren),
-    .rdata(net_rx_buffer_rdata),
-    .wen(net_rx_buffer_wen),
-    .wdata(net_rx_buffer_wdata)
-);
-
-/************************************************/
-/* return_id_buffer                           */
-/************************************************/
-logic               return_id_buffer_ren;
-logic               return_id_buffer_wen;
-endpoint_id_t [1:0] return_id_buffer_rdata;
-endpoint_id_t [1:0] return_id_buffer_wdata;
-logic               return_id_buffer_full;
-logic               return_id_buffer_empty;
-
-fifo_basic #(
-    .DEPTH(RX_BUFFER_DEPTH),
-    .DATA_WIDTH(2*ENDPOINT_ID_BITS)
-) return_id_buffer (
-    .CLK(CLK),
-    .nRST(nRST),
-    .full(return_id_buffer_full),
-    .empty(return_id_buffer_empty),
-    .ren(return_id_buffer_ren),
-    .rdata(return_id_buffer_rdata),
-    .wen(return_id_buffer_wen),
-    .wdata(return_id_buffer_wdata)
-);
+  fifo_rob #(
+      .Depth(RxBufferDepth)
+  ) endpoint_rx_buffer (
+      .CLK(CLK),
+      .nRST(nRST),
+      .fifo_rob_full(endpoint_rx_buffer_fifo_rob_full),
+      .fifo_rob_empty(endpoint_rx_buffer_fifo_rob_empty),
+      .req_en(endpoint_rx_buffer_req_en),
+      .req_packet(endpoint_rx_buffer_req_packet),
+      .req_comp(endpoint_rx_buffer_req_comp),
+      .req_comp_stall(endpoint_rx_buffer_req_comp_stall),
+      .req_comp_packet(endpoint_rx_buffer_req_comp_packet),
+      .net_en(endpoint_rx_buffer_net_en),
+      .net_stall(endpoint_rx_buffer_net_stall),
+      .net_packet(endpoint_rx_buffer_net_packet),
+      .net_comp(endpoint_rx_buffer_net_comp),
+      .net_comp_packet(endpoint_rx_buffer_net_comp_packet)
+  );
 
 
-/************************************************/
-/* rx_arbiter                                   */
-/************************************************/
-logic         rx_arbiter_req_stall;
-logic         rx_arbiter_req_en;
-addr_t        rx_arbiter_req_return_id;
-packet_t      rx_arbiter_req_packet;
-logic         rx_arbiter_resp_stall;
-logic         rx_arbiter_resp_en;
-endpoint_id_t [1:0] rx_arbiter_resp_return_id;
-packet_t      rx_arbiter_resp_packet;
-logic         rx_arbiter_net_en;
-logic         rx_arbiter_net_stall;
-net_packet_t  rx_arbiter_net_packet;
+  /************************************************/
+  /* net_rx_buffer                                */
+  /************************************************/
+  logic                       net_rx_buffer_ren;
+  logic                       net_rx_buffer_wen;
+  logic [NetPacketBits-1:0] net_rx_buffer_rdata;
+  logic [NetPacketBits-1:0] net_rx_buffer_wdata;
+  logic                       net_rx_buffer_full;
+  logic                       net_rx_buffer_empty;
 
-endpoint_rx_arbiter rx_arbiter (
-    .req_stall(rx_arbiter_req_stall),
-    .req_en(rx_arbiter_req_en),
-    .req_return_id(rx_arbiter_req_return_id),
-    .req_packet(rx_arbiter_req_packet),
-    .resp_stall(rx_arbiter_resp_stall),
-    .resp_en(rx_arbiter_resp_en),
-    .resp_return_id(rx_arbiter_resp_return_id),
-    .resp_packet(rx_arbiter_resp_packet),
-    .net_en(rx_arbiter_net_en),
-    .net_stall(rx_arbiter_net_stall),
-    .net_packet(rx_arbiter_net_packet)
-);
+  fifo_basic #(
+      .Depth(2 * RxBufferDepth),
+      .Width(NetPacketBits)
+  ) net_rx_buffer (
+      .CLK  (CLK),
+      .nRST (nRST),
+      .full (net_rx_buffer_full),
+      .empty(net_rx_buffer_empty),
+      .ren  (net_rx_buffer_ren),
+      .rdata(net_rx_buffer_rdata),
+      .wen  (net_rx_buffer_wen),
+      .wdata(net_rx_buffer_wdata)
+  );
 
+  /************************************************/
+  /* return_id_buffer                           */
+  /************************************************/
+  logic               return_id_buffer_ren;
+  logic               return_id_buffer_wen;
+  endpoint_id_t [1:0] return_id_buffer_rdata;
+  endpoint_id_t [1:0] return_id_buffer_wdata;
+  logic               return_id_buffer_full;
+  logic               return_id_buffer_empty;
 
-/************************************************/
-/* tx_arbiter                                   */
-/************************************************/
-logic         tx_arbiter_req_stall;
-logic         tx_arbiter_req_en;
-packet_t      tx_arbiter_req_packet;
-logic         tx_arbiter_resp_stall;
-logic         tx_arbiter_resp_en;
-endpoint_id_t [1:0] tx_arbiter_resp_return_id;
-packet_t      tx_arbiter_resp_packet;
-logic         tx_arbiter_net_en;
-logic         tx_arbiter_net_stall;
-net_packet_t  tx_arbiter_net_packet;
-
-endpoint_tx_arbiter #(
-    .ENDPOINT_ID_X(ENDPOINT_ID_X),
-    .ENDPOINT_ID_Y(ENDPOINT_ID_Y),
-    .IS_RING(IS_RING),
-    .IS_MESH(IS_MESH)
-) tx_arbiter (
-    .CLK(CLK),
-    .nRST(nRST),
-    .req_stall(tx_arbiter_req_stall),
-    .req_en(tx_arbiter_req_en),
-    .req_packet(tx_arbiter_req_packet),
-    .resp_stall(tx_arbiter_resp_stall),
-    .resp_en(tx_arbiter_resp_en),
-    .resp_return_id(tx_arbiter_resp_return_id),
-    .resp_packet(tx_arbiter_resp_packet),
-    .net_en(tx_arbiter_net_en),
-    .net_stall(tx_arbiter_net_stall),
-    .net_packet(tx_arbiter_net_packet)
-);
+  fifo_basic #(
+      .Depth(RxBufferDepth),
+      .Width(2 * EndpointIdBits)
+  ) return_id_buffer (
+      .CLK  (CLK),
+      .nRST (nRST),
+      .full (return_id_buffer_full),
+      .empty(return_id_buffer_empty),
+      .ren  (return_id_buffer_ren),
+      .rdata(return_id_buffer_rdata),
+      .wen  (return_id_buffer_wen),
+      .wdata(return_id_buffer_wdata)
+  );
 
 
-/************************************************/
-/* assigns                                      */
-/************************************************/
-assign req_full = endpoint_tx_buffer_fifo_rob_full;
-assign req_empty = endpoint_tx_buffer_fifo_rob_empty;
-assign endpoint_tx_buffer_req_en = req_en;
-assign endpoint_tx_buffer_req_packet = req_packet;
-assign endpoint_tx_buffer_req_comp_stall = req_comp_stall;
-assign endpoint_tx_buffer_net_stall = tx_arbiter_req_stall;
-assign endpoint_tx_buffer_net_comp = rx_arbiter_req_en;
-assign endpoint_tx_buffer_net_comp_packet = rx_arbiter_req_packet;
-assign req_comp_en = endpoint_tx_buffer_req_comp;
-assign req_comp_packet = endpoint_tx_buffer_req_comp_packet;
+  /************************************************/
+  /* rx_arbiter                                   */
+  /************************************************/
+  logic               rx_arbiter_req_stall;
+  logic               rx_arbiter_req_en;
+  addr_t              rx_arbiter_req_return_id;
+  packet_t            rx_arbiter_req_packet;
+  logic               rx_arbiter_resp_stall;
+  logic               rx_arbiter_resp_en;
+  endpoint_id_t [1:0] rx_arbiter_resp_return_id;
+  packet_t            rx_arbiter_resp_packet;
+  logic               rx_arbiter_net_en;
+  logic               rx_arbiter_net_stall;
+  net_packet_t        rx_arbiter_net_packet;
 
-assign resp_full = endpoint_rx_buffer_fifo_rob_full;
-assign resp_empty = endpoint_rx_buffer_fifo_rob_empty;
-assign endpoint_rx_buffer_req_en = rx_arbiter_resp_en;
-assign endpoint_rx_buffer_req_packet = rx_arbiter_resp_packet;
-assign endpoint_rx_buffer_req_comp_stall = tx_arbiter_resp_stall;
-assign endpoint_rx_buffer_net_stall = resp_stall;
-assign endpoint_rx_buffer_net_comp = resp_comp_en;
-assign endpoint_rx_buffer_net_comp_packet = resp_comp_packet;
-assign resp_en = endpoint_rx_buffer_net_en;
-assign resp_packet = endpoint_rx_buffer_net_packet;
+  endpoint_rx_arbiter rx_arbiter (
+      .req_stall(rx_arbiter_req_stall),
+      .req_en(rx_arbiter_req_en),
+      .req_return_id(rx_arbiter_req_return_id),
+      .req_packet(rx_arbiter_req_packet),
+      .resp_stall(rx_arbiter_resp_stall),
+      .resp_en(rx_arbiter_resp_en),
+      .resp_return_id(rx_arbiter_resp_return_id),
+      .resp_packet(rx_arbiter_resp_packet),
+      .net_en(rx_arbiter_net_en),
+      .net_stall(rx_arbiter_net_stall),
+      .net_packet(rx_arbiter_net_packet)
+  );
 
-assign return_id_buffer_ren = tx_arbiter_resp_en && !tx_arbiter_resp_stall;
-assign return_id_buffer_wen = rx_arbiter_resp_en && !rx_arbiter_resp_stall;
-assign return_id_buffer_wdata = rx_arbiter_resp_return_id;
 
-assign rx_arbiter_req_stall = 0;
-assign rx_arbiter_resp_stall = endpoint_rx_buffer_fifo_rob_full;
-assign rx_arbiter_net_en = !net_rx_buffer_empty;
-assign rx_arbiter_net_packet = net_rx_buffer_rdata;
-assign net_stall_rx = net_rx_buffer_full;
+  /************************************************/
+  /* tx_arbiter                                   */
+  /************************************************/
+  logic               tx_arbiter_req_stall;
+  logic               tx_arbiter_req_en;
+  packet_t            tx_arbiter_req_packet;
+  logic               tx_arbiter_resp_stall;
+  logic               tx_arbiter_resp_en;
+  endpoint_id_t [1:0] tx_arbiter_resp_return_id;
+  packet_t            tx_arbiter_resp_packet;
+  logic               tx_arbiter_net_en;
+  logic               tx_arbiter_net_stall;
+  net_packet_t        tx_arbiter_net_packet;
 
-assign net_rx_buffer_ren = !rx_arbiter_net_stall;
-assign net_rx_buffer_wen = net_en_rx;
-assign net_rx_buffer_wdata = net_packet_rx;
+  endpoint_tx_arbiter #(
+      .EndpointIdX(EndpointIdX),
+      .EndpointIdY(EndpointIdY),
+      .NetworkType(NetworkType)
+  ) tx_arbiter (
+      .CLK(CLK),
+      .nRST(nRST),
+      .req_stall(tx_arbiter_req_stall),
+      .req_en(tx_arbiter_req_en),
+      .req_packet(tx_arbiter_req_packet),
+      .resp_stall(tx_arbiter_resp_stall),
+      .resp_en(tx_arbiter_resp_en),
+      .resp_return_id(tx_arbiter_resp_return_id),
+      .resp_packet(tx_arbiter_resp_packet),
+      .net_en(tx_arbiter_net_en),
+      .net_stall(tx_arbiter_net_stall),
+      .net_packet(tx_arbiter_net_packet)
+  );
 
-assign tx_arbiter_req_en = endpoint_tx_buffer_net_en;
-assign tx_arbiter_req_packet = endpoint_tx_buffer_net_packet;
-assign tx_arbiter_resp_en = endpoint_rx_buffer_req_comp;
-assign tx_arbiter_resp_return_id = return_id_buffer_rdata;
-assign tx_arbiter_resp_packet = endpoint_rx_buffer_req_comp_packet;
-assign tx_arbiter_net_stall = net_stall_tx;
-assign net_en_tx = tx_arbiter_net_en;
-assign net_packet_tx = tx_arbiter_net_packet;
 
-// Sanity checks
-always_comb begin
-    assert(return_id_buffer_full == endpoint_rx_buffer_fifo_rob_full);
-    assert(return_id_buffer_empty == endpoint_rx_buffer_fifo_rob_empty);
-end
+  /************************************************/
+  /* assigns                                      */
+  /************************************************/
+  assign req_full = endpoint_tx_buffer_fifo_rob_full;
+  assign req_empty = endpoint_tx_buffer_fifo_rob_empty;
+  assign endpoint_tx_buffer_req_en = req_en;
+  assign endpoint_tx_buffer_req_packet = req_packet;
+  assign endpoint_tx_buffer_req_comp_stall = req_comp_stall;
+  assign endpoint_tx_buffer_net_stall = tx_arbiter_req_stall;
+  assign endpoint_tx_buffer_net_comp = rx_arbiter_req_en;
+  assign endpoint_tx_buffer_net_comp_packet = rx_arbiter_req_packet;
+  assign req_comp_en = endpoint_tx_buffer_req_comp;
+  assign req_comp_packet = endpoint_tx_buffer_req_comp_packet;
+
+  assign resp_full = endpoint_rx_buffer_fifo_rob_full;
+  assign resp_empty = endpoint_rx_buffer_fifo_rob_empty;
+  assign endpoint_rx_buffer_req_en = rx_arbiter_resp_en;
+  assign endpoint_rx_buffer_req_packet = rx_arbiter_resp_packet;
+  assign endpoint_rx_buffer_req_comp_stall = tx_arbiter_resp_stall;
+  assign endpoint_rx_buffer_net_stall = resp_stall;
+  assign endpoint_rx_buffer_net_comp = resp_comp_en;
+  assign endpoint_rx_buffer_net_comp_packet = resp_comp_packet;
+  assign resp_en = endpoint_rx_buffer_net_en;
+  assign resp_packet = endpoint_rx_buffer_net_packet;
+
+  assign return_id_buffer_ren = tx_arbiter_resp_en && !tx_arbiter_resp_stall;
+  assign return_id_buffer_wen = rx_arbiter_resp_en && !rx_arbiter_resp_stall;
+  assign return_id_buffer_wdata = rx_arbiter_resp_return_id;
+
+  assign rx_arbiter_req_stall = 0;
+  assign rx_arbiter_resp_stall = endpoint_rx_buffer_fifo_rob_full;
+  assign rx_arbiter_net_en = !net_rx_buffer_empty;
+  assign rx_arbiter_net_packet = net_rx_buffer_rdata;
+  assign net_stall_rx = net_rx_buffer_full;
+
+  assign net_rx_buffer_ren = !rx_arbiter_net_stall;
+  assign net_rx_buffer_wen = net_en_rx;
+  assign net_rx_buffer_wdata = net_packet_rx;
+
+  assign tx_arbiter_req_en = endpoint_tx_buffer_net_en;
+  assign tx_arbiter_req_packet = endpoint_tx_buffer_net_packet;
+  assign tx_arbiter_resp_en = endpoint_rx_buffer_req_comp;
+  assign tx_arbiter_resp_return_id = return_id_buffer_rdata;
+  assign tx_arbiter_resp_packet = endpoint_rx_buffer_req_comp_packet;
+  assign tx_arbiter_net_stall = net_stall_tx;
+  assign net_en_tx = tx_arbiter_net_en;
+  assign net_packet_tx = tx_arbiter_net_packet;
+
+  // Sanity checks
+  always_comb begin
+    assert (return_id_buffer_full == endpoint_rx_buffer_fifo_rob_full);
+    assert (return_id_buffer_empty == endpoint_rx_buffer_fifo_rob_empty);
+  end
 
 endmodule

@@ -37,9 +37,9 @@ targets:
     tools:
       verilator:
         verilator_options_append:
-          - -GTX_BUFFER_DEPTH=8
-          - -GRX_BUFFER_DEPTH=8
-          - -GBUFFER_RX_DEPTH=16
+          - -GTxBufferDepth=8
+          - -GRxBufferDepth=8
+          - -GBufferRxDepth=16
 
   tb_mesh_5x3:
     <<: *default
@@ -47,6 +47,6 @@ targets:
       verilator:
         verilator_options_append:
           - -DUSE_5x3
-          - -GTX_BUFFER_DEPTH=8
-          - -GRX_BUFFER_DEPTH=8
-          - -GBUFFER_RX_DEPTH=16
+          - -GTxBufferDepth=8
+          - -GRxBufferDepth=8
+          - -GBufferRxDepth=16
