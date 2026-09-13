@@ -126,7 +126,7 @@ void print_config (TBCfg& config) {
 }
 
 void print_help () {
-    std::cerr << "Usage: ./Vfifo_router [flags...]" << std::endl;
+    std::cerr << "Usage: ./Vfifo_rob [flags...]" << std::endl;
     std::cerr << "\t--trace-en: Enable FST wave tracing" << std::endl;
     std::cerr << "\t--cycle-limit n: Set cycle count limit to n" << std::endl;
     std::cerr << "\t--help: Print this" << std::endl;

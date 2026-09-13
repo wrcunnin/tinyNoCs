@@ -101,8 +101,8 @@ module endpoint #(
 /************************************************/
 /* endpoint_tx_buffer                           */
 /************************************************/
-logic    endpoint_tx_buffer_fifo_router_full;
-logic    endpoint_tx_buffer_fifo_router_empty;
+logic    endpoint_tx_buffer_fifo_rob_full;
+logic    endpoint_tx_buffer_fifo_rob_empty;
 logic    endpoint_tx_buffer_req_en;
 packet_t endpoint_tx_buffer_req_packet;
 logic    endpoint_tx_buffer_req_comp;
@@ -114,13 +114,13 @@ packet_t endpoint_tx_buffer_net_packet;
 logic    endpoint_tx_buffer_net_comp;
 packet_t endpoint_tx_buffer_net_comp_packet;
 
-fifo_router #(
+fifo_rob #(
     .DEPTH(TX_BUFFER_DEPTH)
 ) endpoint_tx_buffer (
     .CLK(CLK),
     .nRST(nRST),
-    .fifo_router_full(endpoint_tx_buffer_fifo_router_full),
-    .fifo_router_empty(endpoint_tx_buffer_fifo_router_empty),
+    .fifo_rob_full(endpoint_tx_buffer_fifo_rob_full),
+    .fifo_rob_empty(endpoint_tx_buffer_fifo_rob_empty),
     .req_en(endpoint_tx_buffer_req_en),
     .req_packet(endpoint_tx_buffer_req_packet),
     .req_comp(endpoint_tx_buffer_req_comp),
@@ -137,8 +137,8 @@ fifo_router #(
 /************************************************/
 /* endpoint_rx_buffer                           */
 /************************************************/
-logic    endpoint_rx_buffer_fifo_router_full;
-logic    endpoint_rx_buffer_fifo_router_empty;
+logic    endpoint_rx_buffer_fifo_rob_full;
+logic    endpoint_rx_buffer_fifo_rob_empty;
 logic    endpoint_rx_buffer_req_en;
 packet_t endpoint_rx_buffer_req_packet;
 logic    endpoint_rx_buffer_req_comp;
@@ -150,13 +150,13 @@ packet_t endpoint_rx_buffer_net_packet;
 logic    endpoint_rx_buffer_net_comp;
 packet_t endpoint_rx_buffer_net_comp_packet;
 
-fifo_router #(
+fifo_rob #(
     .DEPTH(RX_BUFFER_DEPTH)
 ) endpoint_rx_buffer (
     .CLK(CLK),
     .nRST(nRST),
-    .fifo_router_full(endpoint_rx_buffer_fifo_router_full),
-    .fifo_router_empty(endpoint_rx_buffer_fifo_router_empty),
+    .fifo_rob_full(endpoint_rx_buffer_fifo_rob_full),
+    .fifo_rob_empty(endpoint_rx_buffer_fifo_rob_empty),
     .req_en(endpoint_rx_buffer_req_en),
     .req_packet(endpoint_rx_buffer_req_packet),
     .req_comp(endpoint_rx_buffer_req_comp),
@@ -287,8 +287,8 @@ endpoint_tx_arbiter #(
 /************************************************/
 /* assigns                                      */
 /************************************************/
-assign req_full = endpoint_tx_buffer_fifo_router_full;
-assign req_empty = endpoint_tx_buffer_fifo_router_empty;
+assign req_full = endpoint_tx_buffer_fifo_rob_full;
+assign req_empty = endpoint_tx_buffer_fifo_rob_empty;
 assign endpoint_tx_buffer_req_en = req_en;
 assign endpoint_tx_buffer_req_packet = req_packet;
 assign endpoint_tx_buffer_req_comp_stall = req_comp_stall;
@@ -298,8 +298,8 @@ assign endpoint_tx_buffer_net_comp_packet = rx_arbiter_req_packet;
 assign req_comp_en = endpoint_tx_buffer_req_comp;
 assign req_comp_packet = endpoint_tx_buffer_req_comp_packet;
 
-assign resp_full = endpoint_rx_buffer_fifo_router_full;
-assign resp_empty = endpoint_rx_buffer_fifo_router_empty;
+assign resp_full = endpoint_rx_buffer_fifo_rob_full;
+assign resp_empty = endpoint_rx_buffer_fifo_rob_empty;
 assign endpoint_rx_buffer_req_en = rx_arbiter_resp_en;
 assign endpoint_rx_buffer_req_packet = rx_arbiter_resp_packet;
 assign endpoint_rx_buffer_req_comp_stall = tx_arbiter_resp_stall;
@@ -314,7 +314,7 @@ assign return_id_buffer_wen = rx_arbiter_resp_en && !rx_arbiter_resp_stall;
 assign return_id_buffer_wdata = rx_arbiter_resp_return_id;
 
 assign rx_arbiter_req_stall = 0;
-assign rx_arbiter_resp_stall = endpoint_rx_buffer_fifo_router_full;
+assign rx_arbiter_resp_stall = endpoint_rx_buffer_fifo_rob_full;
 assign rx_arbiter_net_en = !net_rx_buffer_empty;
 assign rx_arbiter_net_packet = net_rx_buffer_rdata;
 assign net_stall_rx = net_rx_buffer_full;
@@ -334,8 +334,8 @@ assign net_packet_tx = tx_arbiter_net_packet;
 
 // Sanity checks
 always_comb begin
-    assert(return_id_buffer_full == endpoint_rx_buffer_fifo_router_full);
-    assert(return_id_buffer_empty == endpoint_rx_buffer_fifo_router_empty);
+    assert(return_id_buffer_full == endpoint_rx_buffer_fifo_rob_full);
+    assert(return_id_buffer_empty == endpoint_rx_buffer_fifo_rob_empty);
 end
 
 endmodule

@@ -20,9 +20,9 @@ filesets:
       - fifo/fifo_basic.sv
     file_type: systemVerilogSource
 
-  fifo_router:
+  fifo_rob:
     files:
-      - fifo/fifo_router.sv
+      - fifo/fifo_rob.sv
     file_type: systemVerilogSource
 
 targets:
@@ -31,4 +31,4 @@ targets:
       - packages
       - endpoint
       - fifo_basic
-      - fifo_router
+      - fifo_rob

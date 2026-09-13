@@ -12,7 +12,7 @@ mkdir $folder_name
 sv2v --top=ring_16 --define=SYNTHESIS \
     src/rtl/shared/packages/packet_pkg.sv \
     src/rtl/shared/fifo/fifo_basic.sv \
-    src/rtl/shared/fifo/fifo_router.sv \
+    src/rtl/shared/fifo/fifo_rob.sv \
     src/rtl/shared/endpoint/endpoint_rx_arbiter.sv \
     src/rtl/shared/endpoint/endpoint_tx_arbiter.sv \
     src/rtl/shared/endpoint/endpoint.sv \

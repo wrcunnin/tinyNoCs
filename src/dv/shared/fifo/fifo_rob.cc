@@ -14,10 +14,10 @@
 
 #include "verilated.h"
 #include "verilated_fst_c.h"
-#include "Vfifo_router.h"
+#include "Vfifo_rob.h"
 
 #define TRACE_NAME "waveform.fst"
-#define DUT_TYPE Vfifo_router
+#define DUT_TYPE Vfifo_rob
 
 #define GET_PACKET_WEN(packet) (packet[4UL] & 0x1)
 #define GET_PACKET_ID(packet) (packet[3UL])
@@ -118,7 +118,7 @@ void print_config (TBCfg& config) {
 }
 
 void print_help () {
-    std::cerr << "Usage: ./Vfifo_router [flags...]" << std::endl;
+    std::cerr << "Usage: ./Vfifo_rob [flags...]" << std::endl;
     std::cerr << "\t--trace-en: Enable FST wave tracing" << std::endl;
     std::cerr << "\t--cycle-limit n: Set cycle count limit to n" << std::endl;
     std::cerr << "\t--help: Print this" << std::endl;
@@ -417,10 +417,10 @@ int main (int argc, char **argv) {
     tick(dut, trace);
 
     // Empty Signal should be raised
-    assert(dut.fifo_router_empty);
+    assert(dut.fifo_rob_empty);
 
     // Fill the buffer
-    for (int i = 0; !dut.fifo_router_full; i++) {
+    for (int i = 0; !dut.fifo_rob_full; i++) {
         uint32_t r1 = std::rand();
         uint32_t r2 = std::rand();
         req_create(dut,
@@ -433,10 +433,10 @@ int main (int argc, char **argv) {
     }
 
     // sanity checks on FIFO being full
-    assert(dut.fifo_router_full);
+    assert(dut.fifo_rob_full);
     for (int i = 0; i < 5; i++) {
         tick(dut, trace);
-        assert(dut.fifo_router_full);
+        assert(dut.fifo_rob_full);
     }
 
     // take in two requests

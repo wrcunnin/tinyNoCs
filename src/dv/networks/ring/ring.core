@@ -26,7 +26,6 @@ targets:
           - --trace
           - --trace-fst
           - --trace-structs
-          - --trace-threads 4
           - --threads 4
           - -CFLAGS "-std=c++23"
 

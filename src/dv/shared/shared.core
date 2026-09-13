@@ -17,11 +17,11 @@ filesets:
       - fifo/fifo_basic.cc : {file_type: cppSource}
     file_type: systemVerilogSource
 
-  fifo_router:
+  fifo_rob:
     depend:
       - tinynocs:src:rtl-shared:0.0.1
     files:
-      - fifo/fifo_router.cc : {file_type: cppSource}
+      - fifo/fifo_rob.cc : {file_type: cppSource}
     file_type: systemVerilogSource
 
 targets:
@@ -39,7 +39,6 @@ targets:
           - --trace
           - --trace-fst
           - --trace-structs
-          - --trace-threads 4
           - --threads 4
           - -CFLAGS "-std=c++23"
 
@@ -90,27 +89,27 @@ targets:
   ###################################
   # FIFO Router Test Benches
   ###################################
-  tb_fifo_router:
+  tb_fifo_rob:
     <<: *default
-    toplevel: fifo_router
+    toplevel: fifo_rob
     filesets_append:
-      - fifo_router
+      - fifo_rob
 
-  tb_fifo_router_10:
+  tb_fifo_rob_10:
     <<: *default
-    toplevel: fifo_router
+    toplevel: fifo_rob
     filesets_append:
-      - fifo_router
+      - fifo_rob
     tools:
       verilator:
         verilator_options_append:
           - -GDEPTH=10
 
-  tb_fifo_router_64:
+  tb_fifo_rob_64:
     <<: *default
-    toplevel: fifo_router
+    toplevel: fifo_rob
     filesets_append:
-      - fifo_router
+      - fifo_rob
     tools:
       verilator:
         verilator_options_append:
