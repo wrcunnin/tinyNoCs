@@ -44,6 +44,19 @@ module fifo_basic #(
   // Full/empty next signals
   logic next_full, next_empty;
 
+  function automatic logic [DepthBits-1:0] updatePointer;
+    input logic [DepthBits-1:0] pointer;
+
+    // Depth is a power of 2
+    if ($clog2(Depth) != $clog2(Depth - 1)) updatePointer = pointer + 1;
+
+    // Depth is not a power of two, so we must do extra control
+    else begin
+      if (pointer == (Depth - 1)) updatePointer = 0;
+      else updatePointer = pointer + 1;
+    end
+  endfunction
+
   always_ff @(posedge CLK, negedge nRST) begin : fifoBasicFF
     if (!nRST) begin
       buffer <= '0;
@@ -82,12 +95,12 @@ module fifo_basic #(
     next_full  = full;
     next_empty = empty;
 
-    // if we're writing to the buffer & its not full, we need 
+    // if we're writing to the buffer & its not full, we need
     // to assert empty is 0 and full is 1 if ptr's are equal
     if (wen && !full) begin
       next_full  = next_rptr == next_wptr;
       next_empty = 0;
-    end  // if we're read from the buffer & its not empty, we need 
+    end  // if we're read from the buffer & its not empty, we need
          // to assert full is 0 and empty is 1 if ptr's are equal
     else if (ren && !empty) begin
       next_full  = 0;
@@ -108,18 +121,5 @@ module fifo_basic #(
     if (ren && !empty) next_occupancy = next_occupancy - 1;
   end
 `endif
-
-  function logic [DepthBits-1:0] updatePointer;
-    input logic [DepthBits-1:0] pointer;
-
-    // Depth is a power of 2
-    if ($clog2(Depth) != $clog2(Depth - 1)) updatePointer = pointer + 1;
-
-    // Depth is not a power of two, so we must do extra control
-    else begin
-      if (pointer == (Depth - 1)) updatePointer = 0;
-      else updatePointer = pointer + 1;
-    end
-  endfunction
 
 endmodule
