@@ -33,5 +33,5 @@ First, run `scripts/synth-mesh-5x3/sv2v.sh`
 Then, using the method used to install LibreLane, call `librelane` using `scripts/synth-mesh-5x3/config.json`.
 
 ```
-librelane ~/<path to tinyNoCs>/scripts/synth-mesh-5x3config.json
+librelane ~/<path to tinyNoCs>/scripts/synth-mesh-5x3/config.json
 ```
