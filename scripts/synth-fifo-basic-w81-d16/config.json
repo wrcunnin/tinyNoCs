@@ -1,11 +1,11 @@
 {
-    "DESIGN_NAME": "mesh",
+    "DESIGN_NAME": "fifo_basic_w81_d16",
     "VERILOG_FILES": ["dir::../../verilog-fifo-basic-w81-d16/fifo_basic_w81_d16.v"],
-    "CLOCK_PERIOD": 10,
+    "CLOCK_PERIOD": 100,
     "CLOCK_PORT": "CLK",
 
     "SYNTH_ABC_BUFFERING": true,
-    "SYNTH_HIERARCHY_MODE": "keep",
+    "SYNTH_HIERARCHY_MODE": "flatten",
 
     "ERROR_ON_UNMAPPED_CELLS": false,
 

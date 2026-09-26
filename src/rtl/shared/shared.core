@@ -25,6 +25,14 @@ filesets:
       - fifo/fifo_rob.sv
     file_type: systemVerilogSource
 
+  # Put specifically defined macros here
+  fifo_basic_w64_d32:
+    depend:
+      - fifo_basic
+    files:
+      - fifo/fifo_basic_w64_d32.sv
+    file_type: systemVerilogSource
+
 targets:
   default: &default
     filesets:
@@ -32,3 +40,4 @@ targets:
       - endpoint
       - fifo_basic
       - fifo_rob
+      - fifo_basic_w64_d32
