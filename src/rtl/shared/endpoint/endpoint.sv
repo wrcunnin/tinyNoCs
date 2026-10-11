@@ -19,10 +19,12 @@ Description:
 */
 
 import packet_pkg::*;
+import ring_pkg::*;
+import mesh_pkg::*;
 
 module endpoint #(
-    parameter int TxBufferDepth,
-    parameter int RxBufferDepth,
+    parameter int TxBufferDepth = 8,
+    parameter int RxBufferDepth = 8,
     parameter network_type_t NetworkType = kRing
 ) (
     // Clock, async reset
@@ -35,70 +37,42 @@ module endpoint #(
 
     ////////////////////////////////////////////////////////
     // Requester sending data
-    // Lets requester know if TX FIFO is full/empty
+    input logic    req_push_valid,
+    input packet_t req_push_data,
+    output logic   req_push_ready,
+
+    // Requester receiving data
+    output logic    req_pop_valid,
+    output packet_t req_pop_data,
+    input  logic    req_pop_ready,
+
     output logic req_full,
     output logic req_empty,
 
-    // Requester wants to send a packet
-    input logic req_en,
-
-    // Packet information requester wants to send
-    input packet_t req_packet,
-
-    // Indicates if a requester requires the completion to stall
-    input logic req_comp_stall,
-
-    // Indicates a request is ready to be completed
-    output logic req_comp_en,
-
-    // Packet information returned back to requester
-    output packet_t req_comp_packet,
-
     ////////////////////////////////////////////////////////
     // Responder sending data
-    // Stalls the responding FIFO
-    input logic resp_stall,
+    input logic    resp_push_valid,
+    input packet_t resp_push_data,
+    output logic   resp_push_ready,
 
-    // Lets responder know if RX FIFO is full/empty
+    // Responder receiving data
+    output logic    resp_pop_valid,
+    output packet_t resp_pop_data,
+    input  logic    resp_pop_ready,
+
     output logic resp_full,
     output logic resp_empty,
 
-    // Initiates the responder to begin servicing this request
-    output logic resp_en,
-
-    // Packet going out to the responder
-    output packet_t resp_packet,
-
-    // Responder wants to send a packet
-    input logic resp_comp_en,
-
-    // Return address of the packet
-    input addr_t resp_comp_return_addr,
-
-    // Packet information responder wants to send
-    input packet_t resp_comp_packet,
-
     ////////////////////////////////////////////////////////
-    // To Network signals
-    // Stalls requests/responses to network
-    input logic net_stall_tx,
+    // Network sending data
+    output logic        net_pop_valid,
+    output net_packet_t net_pop_data,
+    input  logic        net_pop_ready,
 
-    // Indicates we are sending a packet into the network
-    output logic net_en_tx,
-
-    // Packaged packet to send out to network
-    output net_packet_t net_packet_tx,
-
-    ////////////////////////////////////////////////////////
-    // From Network signals
-    // Stalls packets from network
-    output logic net_stall_rx,
-
-    // Indicates we are sending a packet into the network
-    input logic net_en_rx,
-
-    // Packaged packet to send out to network
-    input net_packet_t net_packet_rx
+    // Network receiving data
+    input  logic        net_push_valid,
+    input  net_packet_t net_push_data,
+    output logic        net_push_ready
 );
 
 
@@ -107,34 +81,38 @@ module endpoint #(
   /************************************************/
   logic    endpoint_tx_buffer_fifo_rob_full;
   logic    endpoint_tx_buffer_fifo_rob_empty;
-  logic    endpoint_tx_buffer_req_en;
-  packet_t endpoint_tx_buffer_req_packet;
-  logic    endpoint_tx_buffer_req_comp;
-  logic    endpoint_tx_buffer_req_comp_stall;
-  packet_t endpoint_tx_buffer_req_comp_packet;
-  logic    endpoint_tx_buffer_net_en;
-  logic    endpoint_tx_buffer_net_stall;
-  packet_t endpoint_tx_buffer_net_packet;
-  logic    endpoint_tx_buffer_net_comp;
-  packet_t endpoint_tx_buffer_net_comp_packet;
+  logic    endpoint_tx_buffer_req_push_valid;
+  packet_t endpoint_tx_buffer_req_push_data;
+  logic    endpoint_tx_buffer_req_push_ready;
+  logic    endpoint_tx_buffer_req_pop_valid;
+  logic    endpoint_tx_buffer_req_pop_ready;
+  packet_t endpoint_tx_buffer_req_pop_data;
+  logic    endpoint_tx_buffer_net_pop_valid;
+  logic    endpoint_tx_buffer_net_pop_ready;
+  packet_t endpoint_tx_buffer_net_pop_data;
+  logic    endpoint_tx_buffer_net_push_valid;
+  packet_t endpoint_tx_buffer_net_push_data;
+  logic    endpoint_tx_buffer_net_push_ready;
 
   fifo_rob #(
       .Depth(TxBufferDepth)
   ) endpoint_tx_buffer (
-      .CLK(CLK),
-      .nRST(nRST),
-      .fifo_rob_full(endpoint_tx_buffer_fifo_rob_full),
+      .CLK           (CLK),
+      .nRST          (nRST),
+      .fifo_rob_full (endpoint_tx_buffer_fifo_rob_full),
       .fifo_rob_empty(endpoint_tx_buffer_fifo_rob_empty),
-      .req_en(endpoint_tx_buffer_req_en),
-      .req_packet(endpoint_tx_buffer_req_packet),
-      .req_comp(endpoint_tx_buffer_req_comp),
-      .req_comp_stall(endpoint_tx_buffer_req_comp_stall),
-      .req_comp_packet(endpoint_tx_buffer_req_comp_packet),
-      .net_en(endpoint_tx_buffer_net_en),
-      .net_stall(endpoint_tx_buffer_net_stall),
-      .net_packet(endpoint_tx_buffer_net_packet),
-      .net_comp(endpoint_tx_buffer_net_comp),
-      .net_comp_packet(endpoint_tx_buffer_net_comp_packet)
+      .req_push_valid(endpoint_tx_buffer_req_push_valid),
+      .req_push_data (endpoint_tx_buffer_req_push_data),
+      .req_push_ready(endpoint_tx_buffer_req_push_ready),
+      .req_pop_valid (endpoint_tx_buffer_req_pop_valid),
+      .req_pop_ready (endpoint_tx_buffer_req_pop_ready),
+      .req_pop_data  (endpoint_tx_buffer_req_pop_data),
+      .net_pop_valid (endpoint_tx_buffer_net_pop_valid),
+      .net_pop_ready (endpoint_tx_buffer_net_pop_ready),
+      .net_pop_data  (endpoint_tx_buffer_net_pop_data),
+      .net_push_valid(endpoint_tx_buffer_net_push_valid),
+      .net_push_data (endpoint_tx_buffer_net_push_data),
+      .net_push_ready(endpoint_tx_buffer_net_push_ready)
   );
 
 
@@ -143,129 +121,133 @@ module endpoint #(
   /************************************************/
   logic    endpoint_rx_buffer_fifo_rob_full;
   logic    endpoint_rx_buffer_fifo_rob_empty;
-  logic    endpoint_rx_buffer_req_en;
-  packet_t endpoint_rx_buffer_req_packet;
-  logic    endpoint_rx_buffer_req_comp;
-  logic    endpoint_rx_buffer_req_comp_stall;
-  packet_t endpoint_rx_buffer_req_comp_packet;
-  logic    endpoint_rx_buffer_net_en;
-  logic    endpoint_rx_buffer_net_stall;
-  packet_t endpoint_rx_buffer_net_packet;
-  logic    endpoint_rx_buffer_net_comp;
-  packet_t endpoint_rx_buffer_net_comp_packet;
+  logic    endpoint_rx_buffer_req_push_valid;
+  packet_t endpoint_rx_buffer_req_push_data;
+  logic    endpoint_rx_buffer_req_push_ready;
+  logic    endpoint_rx_buffer_req_pop_valid;
+  logic    endpoint_rx_buffer_req_pop_ready;
+  packet_t endpoint_rx_buffer_req_pop_data;
+  logic    endpoint_rx_buffer_net_pop_valid;
+  logic    endpoint_rx_buffer_net_pop_ready;
+  packet_t endpoint_rx_buffer_net_pop_data;
+  logic    endpoint_rx_buffer_net_push_valid;
+  packet_t endpoint_rx_buffer_net_push_data;
+  logic    endpoint_rx_buffer_net_push_ready;
 
   fifo_rob #(
       .Depth(RxBufferDepth)
   ) endpoint_rx_buffer (
-      .CLK(CLK),
-      .nRST(nRST),
-      .fifo_rob_full(endpoint_rx_buffer_fifo_rob_full),
+      .CLK           (CLK),
+      .nRST          (nRST),
+      .fifo_rob_full (endpoint_rx_buffer_fifo_rob_full),
       .fifo_rob_empty(endpoint_rx_buffer_fifo_rob_empty),
-      .req_en(endpoint_rx_buffer_req_en),
-      .req_packet(endpoint_rx_buffer_req_packet),
-      .req_comp(endpoint_rx_buffer_req_comp),
-      .req_comp_stall(endpoint_rx_buffer_req_comp_stall),
-      .req_comp_packet(endpoint_rx_buffer_req_comp_packet),
-      .net_en(endpoint_rx_buffer_net_en),
-      .net_stall(endpoint_rx_buffer_net_stall),
-      .net_packet(endpoint_rx_buffer_net_packet),
-      .net_comp(endpoint_rx_buffer_net_comp),
-      .net_comp_packet(endpoint_rx_buffer_net_comp_packet)
+      .req_push_valid(endpoint_rx_buffer_req_push_valid),
+      .req_push_data (endpoint_rx_buffer_req_push_data),
+      .req_push_ready(endpoint_rx_buffer_req_push_ready),
+      .req_pop_valid (endpoint_rx_buffer_req_pop_valid),
+      .req_pop_ready (endpoint_rx_buffer_req_pop_ready),
+      .req_pop_data  (endpoint_rx_buffer_req_pop_data),
+      .net_pop_valid (endpoint_rx_buffer_net_pop_valid),
+      .net_pop_ready (endpoint_rx_buffer_net_pop_ready),
+      .net_pop_data  (endpoint_rx_buffer_net_pop_data),
+      .net_push_valid(endpoint_rx_buffer_net_push_valid),
+      .net_push_data (endpoint_rx_buffer_net_push_data),
+      .net_push_ready(endpoint_rx_buffer_net_push_ready)
   );
 
 
   /************************************************/
   /* net_rx_buffer                                */
   /************************************************/
-  logic                       net_rx_buffer_ren;
-  logic                       net_rx_buffer_wen;
-  logic [NetPacketBits-1:0] net_rx_buffer_rdata;
-  logic [NetPacketBits-1:0] net_rx_buffer_wdata;
-  logic                       net_rx_buffer_full;
-  logic                       net_rx_buffer_empty;
+  logic                     net_rx_buffer_push_valid;
+  logic [NetPacketBits-1:0] net_rx_buffer_push_data;
+  logic                     net_rx_buffer_push_ready;
+  logic                     net_rx_buffer_pop_valid;
+  logic [NetPacketBits-1:0] net_rx_buffer_pop_data;
+  logic                     net_rx_buffer_pop_ready;
 
   fifo_basic #(
       .Depth(2 * RxBufferDepth),
       .Width(NetPacketBits)
   ) net_rx_buffer (
-      .CLK  (CLK),
-      .nRST (nRST),
-      .full (net_rx_buffer_full),
-      .empty(net_rx_buffer_empty),
-      .ren  (net_rx_buffer_ren),
-      .rdata(net_rx_buffer_rdata),
-      .wen  (net_rx_buffer_wen),
-      .wdata(net_rx_buffer_wdata)
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(net_rx_buffer_push_valid),
+      .push_data (net_rx_buffer_push_data),
+      .push_ready(net_rx_buffer_push_ready),
+      .pop_valid (net_rx_buffer_pop_valid),
+      .pop_data  (net_rx_buffer_pop_data),
+      .pop_ready (net_rx_buffer_pop_ready)
   );
 
   /************************************************/
-  /* return_id_buffer                           */
+  /* return_id_buffer                             */
   /************************************************/
-  logic               return_id_buffer_ren;
-  logic               return_id_buffer_wen;
-  endpoint_id_t [1:0] return_id_buffer_rdata;
-  endpoint_id_t [1:0] return_id_buffer_wdata;
-  logic               return_id_buffer_full;
-  logic               return_id_buffer_empty;
+  logic               return_id_buffer_push_valid;
+  endpoint_id_t [1:0] return_id_buffer_push_data;
+  logic               return_id_buffer_push_ready;
+  logic               return_id_buffer_pop_valid;
+  endpoint_id_t [1:0] return_id_buffer_pop_data;
+  logic               return_id_buffer_pop_ready;
 
   fifo_basic #(
       .Depth(RxBufferDepth),
       .Width(2 * EndpointIdBits)
   ) return_id_buffer (
-      .CLK  (CLK),
-      .nRST (nRST),
-      .full (return_id_buffer_full),
-      .empty(return_id_buffer_empty),
-      .ren  (return_id_buffer_ren),
-      .rdata(return_id_buffer_rdata),
-      .wen  (return_id_buffer_wen),
-      .wdata(return_id_buffer_wdata)
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(return_id_buffer_push_valid),
+      .push_data (return_id_buffer_push_data),
+      .push_ready(return_id_buffer_push_ready),
+      .pop_valid (return_id_buffer_pop_valid),
+      .pop_data  (return_id_buffer_pop_data),
+      .pop_ready (return_id_buffer_pop_ready)
   );
 
 
   /************************************************/
   /* rx_arbiter                                   */
   /************************************************/
-  logic               rx_arbiter_req_stall;
-  logic               rx_arbiter_req_en;
-  addr_t              rx_arbiter_req_return_id;
-  packet_t            rx_arbiter_req_packet;
-  logic               rx_arbiter_resp_stall;
-  logic               rx_arbiter_resp_en;
+  logic               rx_arbiter_req_pop_ready;
+  logic               rx_arbiter_req_pop_valid;
+  endpoint_id_t [1:0] rx_arbiter_req_return_id;
+  packet_t            rx_arbiter_req_pop_data;
+  logic               rx_arbiter_resp_pop_ready;
+  logic               rx_arbiter_resp_pop_valid;
   endpoint_id_t [1:0] rx_arbiter_resp_return_id;
-  packet_t            rx_arbiter_resp_packet;
-  logic               rx_arbiter_net_en;
-  logic               rx_arbiter_net_stall;
-  net_packet_t        rx_arbiter_net_packet;
+  packet_t            rx_arbiter_resp_pop_data;
+  logic               rx_arbiter_push_valid;
+  logic               rx_arbiter_push_ready;
+  net_packet_t        rx_arbiter_push_data;
 
   endpoint_rx_arbiter rx_arbiter (
-      .req_stall(rx_arbiter_req_stall),
-      .req_en(rx_arbiter_req_en),
-      .req_return_id(rx_arbiter_req_return_id),
-      .req_packet(rx_arbiter_req_packet),
-      .resp_stall(rx_arbiter_resp_stall),
-      .resp_en(rx_arbiter_resp_en),
+      .req_pop_ready (rx_arbiter_req_pop_ready),
+      .req_pop_valid (rx_arbiter_req_pop_valid),
+      .req_return_id (rx_arbiter_req_return_id),
+      .req_pop_data  (rx_arbiter_req_pop_data),
+      .resp_pop_ready(rx_arbiter_resp_pop_ready),
+      .resp_pop_valid(rx_arbiter_resp_pop_valid),
       .resp_return_id(rx_arbiter_resp_return_id),
-      .resp_packet(rx_arbiter_resp_packet),
-      .net_en(rx_arbiter_net_en),
-      .net_stall(rx_arbiter_net_stall),
-      .net_packet(rx_arbiter_net_packet)
+      .resp_pop_data (rx_arbiter_resp_pop_data),
+      .push_valid    (rx_arbiter_push_valid),
+      .push_ready    (rx_arbiter_push_ready),
+      .push_data     (rx_arbiter_push_data)
   );
 
 
   /************************************************/
   /* tx_arbiter                                   */
   /************************************************/
-  logic               tx_arbiter_req_stall;
-  logic               tx_arbiter_req_en;
-  packet_t            tx_arbiter_req_packet;
-  logic               tx_arbiter_resp_stall;
-  logic               tx_arbiter_resp_en;
+  logic               tx_arbiter_req_push_ready;
+  logic               tx_arbiter_req_push_valid;
+  packet_t            tx_arbiter_req_push_data;
+  logic               tx_arbiter_resp_push_ready;
+  logic               tx_arbiter_resp_push_valid;
   endpoint_id_t [1:0] tx_arbiter_resp_return_id;
-  packet_t            tx_arbiter_resp_packet;
-  logic               tx_arbiter_net_en;
-  logic               tx_arbiter_net_stall;
-  net_packet_t        tx_arbiter_net_packet;
+  packet_t            tx_arbiter_resp_push_data;
+  logic               tx_arbiter_pop_valid;
+  logic               tx_arbiter_pop_ready;
+  net_packet_t        tx_arbiter_pop_data;
 
   endpoint_tx_arbiter #(
       .NetworkType(NetworkType)
@@ -274,16 +256,16 @@ module endpoint #(
       .nRST,
       .strap_endpoint_id_x,
       .strap_endpoint_id_y,
-      .req_stall               (tx_arbiter_req_stall),
-      .req_en                  (tx_arbiter_req_en),
-      .req_packet              (tx_arbiter_req_packet),
-      .resp_stall              (tx_arbiter_resp_stall),
-      .resp_en                 (tx_arbiter_resp_en),
-      .resp_return_id          (tx_arbiter_resp_return_id),
-      .resp_packet             (tx_arbiter_resp_packet),
-      .net_en                  (tx_arbiter_net_en),
-      .net_stall               (tx_arbiter_net_stall),
-      .net_packet              (tx_arbiter_net_packet)
+      .req_push_ready (tx_arbiter_req_push_ready),
+      .req_push_valid (tx_arbiter_req_push_valid),
+      .req_push_data  (tx_arbiter_req_push_data),
+      .resp_push_ready(tx_arbiter_resp_push_ready),
+      .resp_push_valid(tx_arbiter_resp_push_valid),
+      .resp_return_id (tx_arbiter_resp_return_id),
+      .resp_push_data (tx_arbiter_resp_push_data),
+      .pop_valid      (tx_arbiter_pop_valid),
+      .pop_ready      (tx_arbiter_pop_ready),
+      .pop_data       (tx_arbiter_pop_data)
   );
 
 
@@ -292,53 +274,58 @@ module endpoint #(
   /************************************************/
   assign req_full = endpoint_tx_buffer_fifo_rob_full;
   assign req_empty = endpoint_tx_buffer_fifo_rob_empty;
-  assign endpoint_tx_buffer_req_en = req_en;
-  assign endpoint_tx_buffer_req_packet = req_packet;
-  assign endpoint_tx_buffer_req_comp_stall = req_comp_stall;
-  assign endpoint_tx_buffer_net_stall = tx_arbiter_req_stall;
-  assign endpoint_tx_buffer_net_comp = rx_arbiter_req_en;
-  assign endpoint_tx_buffer_net_comp_packet = rx_arbiter_req_packet;
-  assign req_comp_en = endpoint_tx_buffer_req_comp;
-  assign req_comp_packet = endpoint_tx_buffer_req_comp_packet;
+  assign endpoint_tx_buffer_req_push_valid = req_push_valid;
+  assign endpoint_tx_buffer_req_push_data = req_push_data;
+  assign req_push_ready = endpoint_tx_buffer_req_push_ready;
+  assign endpoint_tx_buffer_req_pop_ready = req_pop_ready;
+  assign endpoint_tx_buffer_net_pop_ready = tx_arbiter_req_push_ready;
+  assign endpoint_tx_buffer_net_push_valid = rx_arbiter_req_pop_valid;
+  assign endpoint_tx_buffer_net_push_data = rx_arbiter_req_pop_data;
+  assign req_pop_valid = endpoint_tx_buffer_req_pop_valid;
+  assign req_pop_data = endpoint_tx_buffer_req_pop_data;
 
   assign resp_full = endpoint_rx_buffer_fifo_rob_full;
   assign resp_empty = endpoint_rx_buffer_fifo_rob_empty;
-  assign endpoint_rx_buffer_req_en = rx_arbiter_resp_en;
-  assign endpoint_rx_buffer_req_packet = rx_arbiter_resp_packet;
-  assign endpoint_rx_buffer_req_comp_stall = tx_arbiter_resp_stall;
-  assign endpoint_rx_buffer_net_stall = resp_stall;
-  assign endpoint_rx_buffer_net_comp = resp_comp_en;
-  assign endpoint_rx_buffer_net_comp_packet = resp_comp_packet;
-  assign resp_en = endpoint_rx_buffer_net_en;
-  assign resp_packet = endpoint_rx_buffer_net_packet;
+  assign endpoint_rx_buffer_req_push_valid = rx_arbiter_resp_pop_valid;
+  assign endpoint_rx_buffer_req_push_data = rx_arbiter_resp_pop_data;
+  assign endpoint_rx_buffer_req_pop_ready = tx_arbiter_resp_push_ready;
+  assign endpoint_rx_buffer_net_pop_ready = resp_pop_ready;
+  assign endpoint_rx_buffer_net_push_valid = resp_push_valid;
+  assign endpoint_rx_buffer_net_push_data = resp_push_data;
+  assign resp_push_ready = endpoint_rx_buffer_net_push_ready;
+  assign resp_pop_valid = endpoint_rx_buffer_net_pop_valid;
+  assign resp_pop_data = endpoint_rx_buffer_net_pop_data;
 
-  assign return_id_buffer_ren = tx_arbiter_resp_en && !tx_arbiter_resp_stall;
-  assign return_id_buffer_wen = rx_arbiter_resp_en && !rx_arbiter_resp_stall;
-  assign return_id_buffer_wdata = rx_arbiter_resp_return_id;
+  assign return_id_buffer_pop_ready = tx_arbiter_resp_push_ready;
+  assign return_id_buffer_push_valid = rx_arbiter_resp_pop_valid;
+  assign return_id_buffer_push_data = rx_arbiter_resp_return_id;
 
-  assign rx_arbiter_req_stall = 0;
-  assign rx_arbiter_resp_stall = endpoint_rx_buffer_fifo_rob_full;
-  assign rx_arbiter_net_en = !net_rx_buffer_empty;
-  assign rx_arbiter_net_packet = net_rx_buffer_rdata;
-  assign net_stall_rx = net_rx_buffer_full;
+  assign rx_arbiter_req_pop_ready = endpoint_tx_buffer_net_push_ready;
+  assign rx_arbiter_resp_pop_ready = endpoint_rx_buffer_req_push_ready;
+  assign rx_arbiter_push_valid = net_rx_buffer_pop_valid;
+  assign rx_arbiter_push_data = net_rx_buffer_pop_data;
+  assign net_push_ready = net_rx_buffer_push_ready;
 
-  assign net_rx_buffer_ren = !rx_arbiter_net_stall;
-  assign net_rx_buffer_wen = net_en_rx;
-  assign net_rx_buffer_wdata = net_packet_rx;
+  assign net_rx_buffer_pop_ready = rx_arbiter_push_ready;
+  assign net_rx_buffer_push_valid = net_push_valid;
+  assign net_rx_buffer_push_data = net_push_data;
 
-  assign tx_arbiter_req_en = endpoint_tx_buffer_net_en;
-  assign tx_arbiter_req_packet = endpoint_tx_buffer_net_packet;
-  assign tx_arbiter_resp_en = endpoint_rx_buffer_req_comp;
-  assign tx_arbiter_resp_return_id = return_id_buffer_rdata;
-  assign tx_arbiter_resp_packet = endpoint_rx_buffer_req_comp_packet;
-  assign tx_arbiter_net_stall = net_stall_tx;
-  assign net_en_tx = tx_arbiter_net_en;
-  assign net_packet_tx = tx_arbiter_net_packet;
+  assign tx_arbiter_req_push_valid = endpoint_tx_buffer_net_pop_valid;
+  assign tx_arbiter_req_push_data = endpoint_tx_buffer_net_pop_data;
+  assign tx_arbiter_resp_push_valid = endpoint_rx_buffer_req_pop_valid;
+  assign tx_arbiter_resp_return_id = return_id_buffer_pop_data;
+  assign tx_arbiter_resp_push_data = endpoint_rx_buffer_req_pop_data;
+  assign tx_arbiter_pop_ready = net_pop_ready;
+  assign net_pop_valid = tx_arbiter_pop_valid;
+  assign net_pop_data = tx_arbiter_pop_data;
 
   // Sanity checks
   always_comb begin
-    assert (return_id_buffer_full == endpoint_rx_buffer_fifo_rob_full);
-    assert (return_id_buffer_empty == endpoint_rx_buffer_fifo_rob_empty);
+    // TODO(wrcunnin): make push_ready deassert when in reset
+    if (nRST) begin
+      assert (!return_id_buffer_push_ready == endpoint_rx_buffer_fifo_rob_full);
+      assert (!return_id_buffer_pop_valid == endpoint_rx_buffer_fifo_rob_empty);
+    end
   end
 
 endmodule

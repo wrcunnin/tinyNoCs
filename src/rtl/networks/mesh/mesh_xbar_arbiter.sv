@@ -9,6 +9,7 @@ Description:
 */
 
 import packet_pkg::*;
+import mesh_pkg::*;
 
 module mesh_xbar_arbiter (
     input logic CLK, nRST,

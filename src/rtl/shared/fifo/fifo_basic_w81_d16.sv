@@ -12,28 +12,22 @@ module fifo_basic_w81_d16 #(
     input logic CLK,
     input logic nRST,
 
-    // Read enable coming from the consumer
-    input logic ren,
+    // Push Interface
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
+    output logic             push_ready,
 
-    // Write enable coming from the producer
-    input logic wen,
-
-    // Read data to the consumer
-    output logic [Width-1:0] rdata,
-
-    // Write data from the producer
-    input logic [Width-1:0] wdata,
-
-    // Full/enable signals to go to producer/consumer
-    output logic full,
-    output logic empty
+    // Pop Interface
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data,
+    input  logic             pop_ready
 );
 
-fifo_basic  #(
-    .Depth(Depth),
-    .Width(Width)
-) fifo_basic_inst (
-    .*
-);
+  fifo_basic #(
+      .Depth(Depth),
+      .Width(Width)
+  ) fifo_basic_inst (
+      .*
+  );
 
 endmodule

@@ -9,28 +9,29 @@ Description:
 */
 
 import packet_pkg::*;
+import mesh_pkg::*;
 
 module mesh_xbar_arbiter_out_ctrl (
     input logic CLK,
     input logic nRST,
 
-    // Output is being stalled
-    input logic net_stall_tx,
+    // Output is ready
+    input logic pop_ready,
 
     // Enable the writing of the packet
-    output logic net_en_tx,
+    output logic pop_valid,
 
     // Packet to transmit
-    output net_packet_t net_packet_tx,
+    output net_packet_t pop_data,
 
-    // Stall the inputs
-    output logic [2:0] net_stall_rx,
+    // Ready to the inputs
+    output logic [2:0] push_ready,
 
     // Indicates an input is wanting to send through this output
-    input logic [2:0] net_en_rx,
+    input logic [2:0] push_valid,
 
-    // To stall the outputs
-    input net_packet_t [2:0] net_packet_rx
+    // Packets from the inputs
+    input net_packet_t [2:0] push_data
 );
 
   typedef logic [1:0] lru_state_t;
@@ -49,7 +50,7 @@ module mesh_xbar_arbiter_out_ctrl (
       lru[0] <= 2'd0;
       lru[1] <= 2'd1;
       lru[2] <= 2'd2;
-    end else if (!net_stall_tx) begin
+    end else if (pop_ready) begin
       if (input_to_send[0]) begin
         lru[0] <= 2'd0;
         lru[1] <= is1gt2 ? 2'd2 : 2'd1;
@@ -71,7 +72,7 @@ module mesh_xbar_arbiter_out_ctrl (
     input_to_send_idx = 3;  // probably doesn't need to 3, but this is unused so it's fine
 
     casez ({
-      net_en_rx[0], net_en_rx[1], net_en_rx[2], is0gt1, is0gt2, is1gt2
+      push_valid[0], push_valid[1], push_valid[2], is0gt1, is0gt2, is1gt2
     })
       // We should send input 0
       6'b100???, 6'b1??11?, 6'b101?1?, 6'b1101??: begin
@@ -101,14 +102,14 @@ module mesh_xbar_arbiter_out_ctrl (
   end
 
   always_comb begin : OUTPUT_CTRL
-    net_packet_tx = '0;
-    net_en_tx = 0;
-    net_stall_rx = '1;
+    pop_data   = '0;
+    pop_valid  = 0;
+    push_ready = '0;
 
-    if (!net_stall_tx && input_to_send) begin
-      net_packet_tx = net_packet_rx[input_to_send_idx];
-      net_en_tx = 1;
-      net_stall_rx[input_to_send_idx] = 0;
+    if (pop_ready && input_to_send) begin
+      pop_data = push_data[input_to_send_idx];
+      pop_valid = 1;
+      push_ready[input_to_send_idx] = 1;
     end
   end
 

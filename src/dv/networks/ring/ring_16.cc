@@ -274,27 +274,26 @@ void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
 void req_reset (DUT_TYPE& dut) {
     // into FIFO buffer
     for (int i = 0; i < NUM_ENDPOINTS; i++) {
-        SET_LOGIC(dut.req_en, 0, i);
-        SET_PACKET_WEN(dut.req_packet, 0, i);
-        SET_PACKET_ID(dut.req_packet, 0, i);
-        SET_PACKET_ADDR(dut.req_packet, 0, i);
-        SET_PACKET_PAYLOAD(dut.req_packet, 0, i);
+        SET_LOGIC(dut.req_push_valid, 0, i);
+        SET_PACKET_WEN(dut.req_push_data, 0, i);
+        SET_PACKET_ID(dut.req_push_data, 0, i);
+        SET_PACKET_ADDR(dut.req_push_data, 0, i);
+        SET_PACKET_PAYLOAD(dut.req_push_data, 0, i);
 
         // for committing requests to FIFO
-        SET_LOGIC(dut.req_comp_stall, 1, i);
+        SET_LOGIC(dut.req_pop_ready, 0, i);
     }
 }
 
 void resp_reset (DUT_TYPE& dut) {
     // into FIFO buffer
     for (int i = 0; i < NUM_ENDPOINTS; i++) {
-        SET_LOGIC(dut.resp_stall, 1, i);
-        SET_LOGIC(dut.resp_comp_en, 0, i);
-        SET_ADDR(dut.resp_comp_return_addr, 0, i);
-        SET_PACKET_WEN(dut.resp_comp_packet, 0, i);
-        SET_PACKET_ID(dut.resp_comp_packet, 0, i);
-        SET_PACKET_ADDR(dut.resp_comp_packet, 0, i);
-        SET_PACKET_PAYLOAD(dut.resp_comp_packet, 0, i);
+        SET_LOGIC(dut.resp_pop_ready, 0, i);
+        SET_LOGIC(dut.resp_push_valid, 0, i);
+        SET_PACKET_WEN(dut.resp_push_data, 0, i);
+        SET_PACKET_ID(dut.resp_push_data, 0, i);
+        SET_PACKET_ADDR(dut.resp_push_data, 0, i);
+        SET_PACKET_PAYLOAD(dut.resp_push_data, 0, i);
     }
 }
 
@@ -302,8 +301,8 @@ void req_send (
     DUT_TYPE& dut,
     int endpoint_idx
 ) {
-    // if the endpoint is not full
-    if (!GET_LOGIC(dut.req_full, endpoint_idx) && requestsSent[endpoint_idx] < TOTAL_REQUESTS) {
+    // if the endpoint is ready to accept a push
+    if (GET_LOGIC(dut.req_push_ready, endpoint_idx) && requestsSent[endpoint_idx] < TOTAL_REQUESTS) {
         uint32_t r1 = std::rand();
         uint32_t r2 = std::rand();
         uint32_t r3 = std::rand();
@@ -327,17 +326,17 @@ void req_send (
 
         if (config.debug) {
             std::cout << "[INFO] At Cycle " << cycles << ", Creating Request to FIFO Router in Endpoint " << endpoint_idx << std::endl;
-            std::cout << "       req_en             : " << (ren || wen) << std::endl;
-            std::cout << "       req_packet.wen     : " << wen << std::endl;
-            std::cout << "       req_packet.addr    : 0x" << std::hex << addr << std::dec << std::endl;
-            std::cout << "       req_packet.payload : 0x" << std::hex << payload << std::dec << "\n" << std::endl;
+            std::cout << "       req_push_valid        : " << (ren || wen) << std::endl;
+            std::cout << "       req_push_data.wen     : " << wen << std::endl;
+            std::cout << "       req_push_data.addr    : 0x" << std::hex << addr << std::dec << std::endl;
+            std::cout << "       req_push_data.payload : 0x" << std::hex << payload << std::dec << "\n" << std::endl;
         }
 
-        SET_LOGIC(dut.req_en, (ren || wen), endpoint_idx);
-        SET_PACKET_WEN(dut.req_packet, wen, endpoint_idx);
-        SET_PACKET_ID(dut.req_packet, 0, endpoint_idx);
-        SET_PACKET_ADDR(dut.req_packet, addr, endpoint_idx);
-        SET_PACKET_PAYLOAD(dut.req_packet, payload, endpoint_idx);
+        SET_LOGIC(dut.req_push_valid, (ren || wen), endpoint_idx);
+        SET_PACKET_WEN(dut.req_push_data, wen, endpoint_idx);
+        SET_PACKET_ID(dut.req_push_data, 0, endpoint_idx);
+        SET_PACKET_ADDR(dut.req_push_data, addr, endpoint_idx);
+        SET_PACKET_PAYLOAD(dut.req_push_data, payload, endpoint_idx);
 
         netPacket packet {
             .request = true,
@@ -359,10 +358,10 @@ void req_comp (
     DUT_TYPE& dut,
     int endpoint_idx
 ) {
-    if (GET_LOGIC(dut.req_comp_en, endpoint_idx)) {
-        bool comp_wen = GET_PACKET_WEN(dut.req_comp_packet, endpoint_idx);
-        uint32_t comp_addr = GET_PACKET_ADDR(dut.req_comp_packet, endpoint_idx);
-        uint64_t comp_payload = GET_PACKET_PAYLOAD(dut.req_comp_packet, endpoint_idx);
+    if (GET_LOGIC(dut.req_pop_valid, endpoint_idx)) {
+        bool comp_wen = GET_PACKET_WEN(dut.req_pop_data, endpoint_idx);
+        uint32_t comp_addr = GET_PACKET_ADDR(dut.req_pop_data, endpoint_idx);
+        uint64_t comp_payload = GET_PACKET_PAYLOAD(dut.req_pop_data, endpoint_idx);
 
         netPacket packet = requestBufferQueue[endpoint_idx].front();
         requestBufferQueue[endpoint_idx].pop_front();
@@ -381,7 +380,7 @@ void req_comp (
         assert(packet.addr == comp_addr);
         assert(packet.payload_comp == comp_payload);
 
-        SET_LOGIC(dut.req_comp_stall, 0, endpoint_idx);
+        SET_LOGIC(dut.req_pop_ready, 1, endpoint_idx);
         requestsCompleted[endpoint_idx]++;
     }
 }
@@ -391,11 +390,11 @@ void resp_send (
     int endpoint_idx
 ) {
     // if there is a request in the response queue
-    if (GET_LOGIC(dut.resp_en, endpoint_idx)) {
-        bool req_wen = (bool) GET_PACKET_WEN(dut.resp_packet, endpoint_idx);
-        uint32_t req_id = GET_PACKET_ID(dut.resp_packet, endpoint_idx);
-        uint32_t req_addr = GET_PACKET_ADDR(dut.resp_packet, endpoint_idx);
-        uint64_t req_payload = GET_PACKET_PAYLOAD(dut.resp_packet, endpoint_idx);
+    if (GET_LOGIC(dut.resp_pop_valid, endpoint_idx)) {
+        bool req_wen = (bool) GET_PACKET_WEN(dut.resp_pop_data, endpoint_idx);
+        uint32_t req_id = GET_PACKET_ID(dut.resp_pop_data, endpoint_idx);
+        uint32_t req_addr = GET_PACKET_ADDR(dut.resp_pop_data, endpoint_idx);
+        uint64_t req_payload = GET_PACKET_PAYLOAD(dut.resp_pop_data, endpoint_idx);
 
         if (config.debug) {
             std::cout << "[INFO] At Cycle " << cycles << ", Responding to Request in Endpoint " << endpoint_idx << std::endl;
@@ -416,14 +415,13 @@ void resp_send (
         }
         assert(!packet.uninitialized);
 
-        // let the response buffer know not to stall
-        SET_LOGIC(dut.resp_stall, 0, endpoint_idx);
+        // let the response buffer know we are ready to pop
+        SET_LOGIC(dut.resp_pop_ready, 1, endpoint_idx);
 
         // return the payload back to the proper ID in the response queue
-        SET_ADDR(dut.resp_comp_return_addr, packet.start_addr, endpoint_idx);
-        SET_LOGIC(dut.resp_comp_en, 1, endpoint_idx);
-        SET_PACKET_ID(dut.resp_comp_packet, req_id, endpoint_idx);
-        SET_PACKET_PAYLOAD(dut.resp_comp_packet, packet.payload_comp, endpoint_idx);
+        SET_LOGIC(dut.resp_push_valid, 1, endpoint_idx);
+        SET_PACKET_ID(dut.resp_push_data, req_id, endpoint_idx);
+        SET_PACKET_PAYLOAD(dut.resp_push_data, packet.payload_comp, endpoint_idx);
 
         if (config.debug) {
             std::cout << "       start_addr   : 0x" << std::hex << packet.start_addr << std::dec << std::endl;

@@ -235,37 +235,37 @@ void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
 
 void req_reset (DUT_TYPE& dut) {
     // into FIFO buffer
-    dut.req_en = 0;
-    SET_PACKET_WEN(dut.req_packet, 0);
-    SET_PACKET_ID(dut.req_packet, 0);
-    SET_PACKET_ADDR(dut.req_packet, 0);
-    SET_PACKET_PAYLOAD(dut.req_packet, 0);
+    dut.req_push_valid = 0;
+    SET_PACKET_WEN(dut.req_push_data, 0);
+    SET_PACKET_ID(dut.req_push_data, 0);
+    SET_PACKET_ADDR(dut.req_push_data, 0);
+    SET_PACKET_PAYLOAD(dut.req_push_data, 0);
 
     // for committing requests to FIFO
-    dut.req_comp_stall = 1;
+    dut.req_pop_ready = 0;
 }
 
 void resp_reset (DUT_TYPE& dut) {
     // into FIFO buffer
-    dut.resp_stall = 1;
-    dut.resp_comp_en = 0;
-    dut.resp_comp_return_addr = 0;
-    SET_PACKET_WEN(dut.resp_comp_packet, 0);
-    SET_PACKET_ID(dut.resp_comp_packet, 0);
-    SET_PACKET_ADDR(dut.resp_comp_packet, 0);
-    SET_PACKET_PAYLOAD(dut.resp_comp_packet, 0);
+    dut.resp_pop_ready = 0;
+    dut.resp_push_valid = 0;
+    dut.resp_push_return_addr = 0;
+    SET_PACKET_WEN(dut.resp_push_data, 0);
+    SET_PACKET_ID(dut.resp_push_data, 0);
+    SET_PACKET_ADDR(dut.resp_push_data, 0);
+    SET_PACKET_PAYLOAD(dut.resp_push_data, 0);
 }
 
 void net_reset_tx (DUT_TYPE& dut) {
-    dut.net_stall_tx = 1;
+    dut.net_pop_ready = 0;
 }
 
 void net_reset_rx (DUT_TYPE& dut) {
-    dut.net_en_rx = 0;
-    SET_PACKET_WEN(dut.net_packet_rx, 0);
-    SET_PACKET_ID(dut.net_packet_rx, 0);
-    SET_PACKET_ADDR(dut.net_packet_rx, 0);
-    SET_PACKET_PAYLOAD(dut.net_packet_rx, 0);
+    dut.net_push_valid = 0;
+    SET_PACKET_WEN(dut.net_push_data, 0);
+    SET_PACKET_ID(dut.net_push_data, 0);
+    SET_PACKET_ADDR(dut.net_push_data, 0);
+    SET_PACKET_PAYLOAD(dut.net_push_data, 0);
 }
 
 void req_send (
@@ -276,13 +276,13 @@ void req_send (
     uint32_t addr,
     uint64_t payload
 ) {
-    if (!dut.req_full && requests_sent < REQUEST_LIMIT) {
+    if (dut.req_push_ready && requests_sent < REQUEST_LIMIT) {
         std::cout << "[INFO] Creating Request to Endpoint" << std::endl;
-        std::cout << "       start_addr         : 0x" << std::hex << ENDPOINT_ADDR << std::dec << std::endl;
-        std::cout << "       req_en             : " << (ren || wen) << std::endl;
-        std::cout << "       req_packet.wen     : " << wen << std::endl;
-        std::cout << "       req_packet.addr    : 0x" << std::hex << addr << std::dec << std::endl;
-        std::cout << "       req_packet.payload : 0x" << std::hex << payload << std::dec << "\n" << std::endl;
+        std::cout << "       start_addr            : 0x" << std::hex << ENDPOINT_ADDR << std::dec << std::endl;
+        std::cout << "       req_push_valid        : " << (ren || wen) << std::endl;
+        std::cout << "       req_push_data.wen     : " << wen << std::endl;
+        std::cout << "       req_push_data.addr    : 0x" << std::hex << addr << std::dec << std::endl;
+        std::cout << "       req_push_data.payload : 0x" << std::hex << payload << std::dec << "\n" << std::endl;
 
         netPacket packet {
             .request = true,
@@ -294,11 +294,11 @@ void req_send (
             .payload_comp = 0,
         };
 
-        dut.req_en = ren || wen;
-        SET_PACKET_WEN(dut.req_packet, wen);
-        SET_PACKET_ID(dut.req_packet, 0);
-        SET_PACKET_ADDR(dut.req_packet, addr);
-        SET_PACKET_PAYLOAD(dut.req_packet, payload);
+        dut.req_push_valid = ren || wen;
+        SET_PACKET_WEN(dut.req_push_data, wen);
+        SET_PACKET_ID(dut.req_push_data, 0);
+        SET_PACKET_ADDR(dut.req_push_data, addr);
+        SET_PACKET_PAYLOAD(dut.req_push_data, payload);
 
         requestBufferQueue.push_back(packet);
         requests_sent++;
@@ -309,18 +309,18 @@ void net_tx (
     DUT_TYPE& dut,
     int& responses_completed
 ) {
-    if (dut.net_en_tx && accept_counter <= 0) {
-        dut.net_stall_tx = 0;
+    if (dut.net_pop_valid && accept_counter <= 0) {
+        dut.net_pop_ready = 1;
 
         uint32_t r1 = std::rand();
         uint32_t r2 = std::rand();
         netPacket packet {
-            .request = (bool) GET_NET_PACKET_REQUEST(dut.net_packet_tx),
-            .start_addr = GET_NET_PACKET_START_ADDR(dut.net_packet_tx),
-            .wen = (bool) GET_NET_PACKET_WEN(dut.net_packet_tx),
-            .id = GET_NET_PACKET_ID(dut.net_packet_tx),
-            .addr = GET_NET_PACKET_ADDR(dut.net_packet_tx),
-            .payload = GET_NET_PACKET_PAYLOAD(dut.net_packet_tx),
+            .request = (bool) GET_NET_PACKET_REQUEST(dut.net_pop_data),
+            .start_addr = GET_NET_PACKET_START_ADDR(dut.net_pop_data),
+            .wen = (bool) GET_NET_PACKET_WEN(dut.net_pop_data),
+            .id = GET_NET_PACKET_ID(dut.net_pop_data),
+            .addr = GET_NET_PACKET_ADDR(dut.net_pop_data),
+            .payload = GET_NET_PACKET_PAYLOAD(dut.net_pop_data),
             .payload_comp = (( (uint64_t)(r1) ) << 32) + ((uint64_t)(r2))
         };
         std::cout << "[INFO] Network Accepting Packet" << std::endl;

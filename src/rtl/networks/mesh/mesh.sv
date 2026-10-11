@@ -1,3 +1,6 @@
+import packet_pkg::*;
+import mesh_pkg::*;
+
 module mesh #(
     parameter int unsigned TxBufferDepth = 8,
     parameter int unsigned RxBufferDepth = 8,
@@ -9,48 +12,31 @@ module mesh #(
 
     ////////////////////////////////////////////////////////
     // Requester sending data
-    // Lets requester know if TX FIFO is full/empty
+    input logic    [15:0] req_push_valid,
+    input packet_t [15:0] req_push_data,
+    output logic   [15:0] req_push_ready,
+
+    // Requester receiving data
+    output logic    [15:0] req_pop_valid,
+    output packet_t [15:0] req_pop_data,
+    input  logic    [15:0] req_pop_ready,
+
     output logic [15:0] req_full,
     output logic [15:0] req_empty,
 
-    // Requester wants to send a packet
-    input logic [15:0] req_en,
-
-    // Packet information requester wants to send
-    input packet_t [15:0] req_packet,
-
-    // Indicates if a requester requires the completion to stall
-    input logic [15:0] req_comp_stall,
-
-    // Indicates a request is ready to be completed
-    output logic [15:0] req_comp_en,
-
-    // Packet information returned back to requester
-    output packet_t [15:0] req_comp_packet,
-
     ////////////////////////////////////////////////////////
     // Responder sending data
-    // Lets responder know if RX FIFO is full/empty
+    input logic    [15:0] resp_push_valid,
+    input packet_t [15:0] resp_push_data,
+    output logic   [15:0] resp_push_ready,
+
+    // Responder receiving data
+    output logic    [15:0] resp_pop_valid,
+    output packet_t [15:0] resp_pop_data,
+    input  logic    [15:0] resp_pop_ready,
+
     output logic [15:0] resp_full,
-    output logic [15:0] resp_empty,
-
-    // Stalls the responding FIFO
-    input logic [15:0] resp_stall,
-
-    // Initiates the responder to begin servicing this request
-    output logic [15:0] resp_en,
-
-    // Packet going out to the responder
-    output packet_t [15:0] resp_packet,
-
-    // Responder wants to send a packet
-    input logic [15:0] resp_comp_en,
-
-    // Return address of the packet
-    input addr_t [15:0] resp_comp_return_addr,
-
-    // Packet information responder wants to send
-    input packet_t [15:0] resp_comp_packet
+    output logic [15:0] resp_empty
 );
 
 `ifndef USE_5x3

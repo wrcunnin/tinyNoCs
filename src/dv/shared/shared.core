@@ -52,7 +52,7 @@ targets:
       - endpoint
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -GTxBufferDepth=8
           - -GRxBufferDepth=8
           - -GENDPOINT_ADDR=2147487744
@@ -73,7 +73,7 @@ targets:
       - fifo_basic
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -GDepth=10
 
   tb_fifo_basic_64:
@@ -83,7 +83,7 @@ targets:
       - fifo_basic
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -GDepth=64
 
   ###################################
@@ -102,7 +102,7 @@ targets:
       - fifo_rob
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -GDepth=10
 
   tb_fifo_rob_64:
@@ -112,6 +112,6 @@ targets:
       - fifo_rob
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -GDepth=64
 

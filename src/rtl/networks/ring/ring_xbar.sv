@@ -9,10 +9,11 @@ Description:
 */
 
 import packet_pkg::*;
+import ring_pkg::*;
 
 module ring_xbar #(
     parameter int unsigned NetBufferRxDepth = 8,
-    parameter int unsigned EpBufferRxDepth = 8
+    parameter int unsigned EpBufferRxDepth  = 8
 ) (
     // Clock, async reset
     input logic CLK,
@@ -24,157 +25,137 @@ module ring_xbar #(
 
     ////////////////////////////////////////////////////////
     // From Ring Crossbar
-    // Stall the incoming network packet
-    output logic net_stall_rx,
-
-    // Indicates an incoming packet from the network
-    input logic net_en_rx,
-
-    // Incoming packet from the network
-    input net_packet_t net_packet_rx,
+    output logic        net_push_ready,
+    input  logic        net_push_valid,
+    input  net_packet_t net_push_data,
 
     ////////////////////////////////////////////////////////
     // To Ring Crossbar
-    // Outgoing packet is getting stalled
-    input logic net_stall_tx,
-
-    // Indicates an outgoing packet from the network
-    output logic net_en_tx,
-
-    // Outgoing packet to the network
-    output net_packet_t net_packet_tx,
+    input  logic        net_pop_ready,
+    output logic        net_pop_valid,
+    output net_packet_t net_pop_data,
 
     ////////////////////////////////////////////////////////
     // From Endpoint
-    // Stall the incoming endpoint packet
-    output logic endpoint_stall_rx,
-
-    // Indicates an incoming packet from the endpoint
-    input logic endpoint_en_rx,
-
-    // Incoming packet from the endpoint
-    input net_packet_t endpoint_packet_rx,
+    output logic        endpoint_push_ready,
+    input  logic        endpoint_push_valid,
+    input  net_packet_t endpoint_push_data,
 
     ////////////////////////////////////////////////////////
     // To Endpoint
-    // Stall the outgoing endpoint packet
-    input logic endpoint_stall_tx,
-
-    // Indicates an incoming packet from the endpoint
-    output logic endpoint_en_tx,
-
-    // Incoming packet from the endpoint
-    output net_packet_t endpoint_packet_tx
+    input  logic        endpoint_pop_ready,
+    output logic        endpoint_pop_valid,
+    output net_packet_t endpoint_pop_data
 
 );
 
   /************************************************/
   /* net_buffer_rx                                */
   /************************************************/
-  logic                       net_buffer_rx_ren;
-  logic                       net_buffer_rx_wen;
-  logic [NetPacketBits-1:0] net_buffer_rx_rdata;
-  logic [NetPacketBits-1:0] net_buffer_rx_wdata;
-  logic                       net_buffer_rx_full;
-  logic                       net_buffer_rx_empty;
+  logic                     net_buffer_rx_push_valid;
+  logic [NetPacketBits-1:0] net_buffer_rx_push_data;
+  logic                     net_buffer_rx_push_ready;
+  logic                     net_buffer_rx_pop_valid;
+  logic [NetPacketBits-1:0] net_buffer_rx_pop_data;
+  logic                     net_buffer_rx_pop_ready;
 
   fifo_basic #(
       .Depth(NetBufferRxDepth),
       .Width(NetPacketBits)
   ) net_buffer_rx (
-      .CLK  (CLK),
-      .nRST (nRST),
-      .full (net_buffer_rx_full),
-      .empty(net_buffer_rx_empty),
-      .ren  (net_buffer_rx_ren),
-      .rdata(net_buffer_rx_rdata),
-      .wen  (net_buffer_rx_wen),
-      .wdata(net_buffer_rx_wdata)
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(net_buffer_rx_push_valid),
+      .push_data (net_buffer_rx_push_data),
+      .push_ready(net_buffer_rx_push_ready),
+      .pop_valid (net_buffer_rx_pop_valid),
+      .pop_data  (net_buffer_rx_pop_data),
+      .pop_ready (net_buffer_rx_pop_ready)
   );
 
 
   /************************************************/
   /* endpoint_buffer_rx                           */
   /************************************************/
-  logic                       endpoint_buffer_rx_ren;
-  logic                       endpoint_buffer_rx_wen;
-  logic [NetPacketBits-1:0] endpoint_buffer_rx_rdata;
-  logic [NetPacketBits-1:0] endpoint_buffer_rx_wdata;
-  logic                       endpoint_buffer_rx_full;
-  logic                       endpoint_buffer_rx_empty;
+  logic                     endpoint_buffer_rx_push_valid;
+  logic [NetPacketBits-1:0] endpoint_buffer_rx_push_data;
+  logic                     endpoint_buffer_rx_push_ready;
+  logic                     endpoint_buffer_rx_pop_valid;
+  logic [NetPacketBits-1:0] endpoint_buffer_rx_pop_data;
+  logic                     endpoint_buffer_rx_pop_ready;
 
   fifo_basic #(
       .Depth(EpBufferRxDepth),
       .Width(NetPacketBits)
   ) endpoint_buffer_rx (
-      .CLK  (CLK),
-      .nRST (nRST),
-      .full (endpoint_buffer_rx_full),
-      .empty(endpoint_buffer_rx_empty),
-      .ren  (endpoint_buffer_rx_ren),
-      .rdata(endpoint_buffer_rx_rdata),
-      .wen  (endpoint_buffer_rx_wen),
-      .wdata(endpoint_buffer_rx_wdata)
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(endpoint_buffer_rx_push_valid),
+      .push_data (endpoint_buffer_rx_push_data),
+      .push_ready(endpoint_buffer_rx_push_ready),
+      .pop_valid (endpoint_buffer_rx_pop_valid),
+      .pop_data  (endpoint_buffer_rx_pop_data),
+      .pop_ready (endpoint_buffer_rx_pop_ready)
   );
 
 
   /************************************************/
   /* xbarb                                        */
   /************************************************/
-  logic        xbarb_net_stall_rx;
-  logic        xbarb_net_en_rx;
-  net_packet_t xbarb_net_packet_rx;
-  logic        xbarb_net_stall_tx;
-  logic        xbarb_net_en_tx;
-  net_packet_t xbarb_net_packet_tx;
-  logic        xbarb_endpoint_stall_rx;
-  logic        xbarb_endpoint_en_rx;
-  net_packet_t xbarb_endpoint_packet_rx;
-  logic        xbarb_endpoint_stall_tx;
-  logic        xbarb_endpoint_en_tx;
-  net_packet_t xbarb_endpoint_packet_tx;
+  logic        xbarb_net_push_ready;
+  logic        xbarb_net_push_valid;
+  net_packet_t xbarb_net_push_data;
+  logic        xbarb_net_pop_ready;
+  logic        xbarb_net_pop_valid;
+  net_packet_t xbarb_net_pop_data;
+  logic        xbarb_endpoint_push_ready;
+  logic        xbarb_endpoint_push_valid;
+  net_packet_t xbarb_endpoint_push_data;
+  logic        xbarb_endpoint_pop_ready;
+  logic        xbarb_endpoint_pop_valid;
+  net_packet_t xbarb_endpoint_pop_data;
   ring_xbar_arbiter xbarb (
       .CLK,
       .nRST,
       .strap_endpoint_id,
-      .net_stall_rx(xbarb_net_stall_rx),
-      .net_en_rx(xbarb_net_en_rx),
-      .net_packet_rx(xbarb_net_packet_rx),
-      .net_stall_tx(xbarb_net_stall_tx),
-      .net_en_tx(xbarb_net_en_tx),
-      .net_packet_tx(xbarb_net_packet_tx),
-      .endpoint_stall_rx(xbarb_endpoint_stall_rx),
-      .endpoint_en_rx(xbarb_endpoint_en_rx),
-      .endpoint_packet_rx(xbarb_endpoint_packet_rx),
-      .endpoint_stall_tx(xbarb_endpoint_stall_tx),
-      .endpoint_en_tx(xbarb_endpoint_en_tx),
-      .endpoint_packet_tx(xbarb_endpoint_packet_tx)
+      .net_push_ready     (xbarb_net_push_ready),
+      .net_push_valid     (xbarb_net_push_valid),
+      .net_push_data      (xbarb_net_push_data),
+      .net_pop_ready      (xbarb_net_pop_ready),
+      .net_pop_valid      (xbarb_net_pop_valid),
+      .net_pop_data       (xbarb_net_pop_data),
+      .endpoint_push_ready(xbarb_endpoint_push_ready),
+      .endpoint_push_valid(xbarb_endpoint_push_valid),
+      .endpoint_push_data (xbarb_endpoint_push_data),
+      .endpoint_pop_ready (xbarb_endpoint_pop_ready),
+      .endpoint_pop_valid (xbarb_endpoint_pop_valid),
+      .endpoint_pop_data  (xbarb_endpoint_pop_data)
   );
 
 
   /************************************************/
   /* assigns                                      */
   /************************************************/
-  assign net_stall_rx = net_buffer_rx_full;
-  assign net_en_tx = xbarb_net_en_tx;
-  assign net_packet_tx = xbarb_net_packet_tx;
-  assign endpoint_stall_rx = endpoint_buffer_rx_full;
-  assign endpoint_en_tx = xbarb_endpoint_en_tx;
-  assign endpoint_packet_tx = xbarb_endpoint_packet_tx;
+  assign net_push_ready = net_buffer_rx_push_ready;
+  assign net_pop_valid = xbarb_net_pop_valid;
+  assign net_pop_data = xbarb_net_pop_data;
+  assign endpoint_push_ready = endpoint_buffer_rx_push_ready;
+  assign endpoint_pop_valid = xbarb_endpoint_pop_valid;
+  assign endpoint_pop_data = xbarb_endpoint_pop_data;
 
-  assign net_buffer_rx_ren = !xbarb_net_stall_rx;
-  assign net_buffer_rx_wen = net_en_rx;
-  assign net_buffer_rx_wdata = net_packet_rx;
+  assign net_buffer_rx_pop_ready = xbarb_net_push_ready;
+  assign net_buffer_rx_push_valid = net_push_valid;
+  assign net_buffer_rx_push_data = net_push_data;
 
-  assign endpoint_buffer_rx_ren = !xbarb_endpoint_stall_rx;
-  assign endpoint_buffer_rx_wen = endpoint_en_rx;
-  assign endpoint_buffer_rx_wdata = endpoint_packet_rx;
+  assign endpoint_buffer_rx_pop_ready = xbarb_endpoint_push_ready;
+  assign endpoint_buffer_rx_push_valid = endpoint_push_valid;
+  assign endpoint_buffer_rx_push_data = endpoint_push_data;
 
-  assign xbarb_net_en_rx = !net_buffer_rx_empty;
-  assign xbarb_net_packet_rx = net_buffer_rx_rdata;
-  assign xbarb_net_stall_tx = net_stall_tx;
-  assign xbarb_endpoint_en_rx = !endpoint_buffer_rx_empty;
-  assign xbarb_endpoint_packet_rx = endpoint_buffer_rx_rdata;
-  assign xbarb_endpoint_stall_tx = endpoint_stall_tx;
+  assign xbarb_net_push_valid = net_buffer_rx_pop_valid;
+  assign xbarb_net_push_data = net_buffer_rx_pop_data;
+  assign xbarb_net_pop_ready = net_pop_ready;
+  assign xbarb_endpoint_push_valid = endpoint_buffer_rx_pop_valid;
+  assign xbarb_endpoint_push_data = endpoint_buffer_rx_pop_data;
+  assign xbarb_endpoint_pop_ready = endpoint_pop_ready;
 
 endmodule

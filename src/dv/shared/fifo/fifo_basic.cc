@@ -47,7 +47,7 @@ void reset (DUT_TYPE& dut, VerilatedFstC& trace);
 
 void reset_producer (DUT_TYPE& dut);
 void reset_consumer (DUT_TYPE& dut);
-void produce (DUT_TYPE& dut, uint32_t wdata);
+void produce (DUT_TYPE& dut, uint32_t push_data);
 void consume (DUT_TYPE& dut, VerilatedFstC& trace);
 
 void print_config (TBCfg& config) {
@@ -144,27 +144,27 @@ void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
 }
 
 void reset_producer (DUT_TYPE& dut) {
-    dut.wen = 0;
-    dut.wdata = 0;
+    dut.push_valid = 0;
+    dut.push_data = 0;
 }
 
 void reset_consumer (DUT_TYPE& dut) {
-    dut.ren = 0;
+    dut.pop_ready = 0;
 }
 
-void produce (DUT_TYPE& dut, uint32_t wdata){
+void produce (DUT_TYPE& dut, uint32_t push_data){
     std::cout << "[INFO] Producer writing data to FIFO" << std::endl;
-    std::cout << "       wdata : 0x" << std::hex << wdata << std::dec << "\n" << std::endl;
-    dut.wen = 1;
-    dut.wdata = wdata;
+    std::cout << "       push_data : 0x" << std::hex << push_data << std::dec << "\n" << std::endl;
+    dut.push_valid = 1;
+    dut.push_data = push_data;
 
-    producerQueue.push_back(wdata);
+    producerQueue.push_back(push_data);
 }
 
 void consume (DUT_TYPE& dut, VerilatedFstC& trace) {
 
     // begin to read
-    dut.ren = 1;
+    dut.pop_ready = 1;
 
     // consume has to tick for the TB unfortunately
     dut.CLK = 0;
@@ -173,14 +173,14 @@ void consume (DUT_TYPE& dut, VerilatedFstC& trace) {
         trace.dump(sim_time);
     sim_time++;
 
-    uint32_t rdata = dut.rdata;
-    uint32_t expected_rdata = producerQueue.front();
+    uint32_t pop_data = dut.pop_data;
+    uint32_t expected_pop_data = producerQueue.front();
 
     std::cout << "[INFO] Consumer reading data from FIFO" << std::endl;
-    std::cout << "       rdata : 0x" << std::hex << rdata << std::dec << std::endl;
-    std::cout << "    expected : 0x" << std::hex << expected_rdata << std::dec << "\n" << std::endl;
+    std::cout << "    pop_data : 0x" << std::hex << pop_data << std::dec << std::endl;
+    std::cout << "    expected : 0x" << std::hex << expected_pop_data << std::dec << "\n" << std::endl;
 
-    assert(rdata == expected_rdata);
+    assert(pop_data == expected_pop_data);
 
     producerQueue.pop_front();
 
@@ -231,31 +231,32 @@ int main (int argc, char **argv) {
 
     tick(dut, trace);
 
-    // Empty Signal should be raised
-    assert(dut.empty);
+    // Should have no data to pop.
+    assert(!dut.pop_valid);
 
     // Fill the buffer
-    for (int i = 0; !dut.full; i++) {
-        assert(!dut.full);
+    for (int i = 0; dut.push_ready; i++) {
+        assert(dut.push_ready);
 
         uint32_t r1 = std::rand();
         produce(dut, r1);
         tick(dut, trace);
 
-        assert(!dut.empty);
+        assert(dut.pop_valid);
     }
 
-    assert(dut.full);
+    assert(!dut.push_ready);
 
-    for (int i = 0; !dut.empty; i++) {
-        assert(!dut.empty);
+    for (int i = 0; dut.pop_valid; i++) {
+        assert(dut.pop_valid);
 
         consume(dut, trace);
 
-        assert(!dut.full);
+        assert(dut.push_ready);
     }
 
-    assert(dut.empty);
+    // FIFO should be empty now
+    assert(!dut.pop_valid);
 
     reset(dut, trace);
     tick(dut, trace);

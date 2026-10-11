@@ -6,6 +6,9 @@ filesets:
   packages:
     files:
       - packages/packet_pkg.sv
+      - packages/mesh_pkg.sv
+      - packages/ring_pkg.sv
+      - packages/torus_pkg.sv
     file_type: systemVerilogSource
 
   endpoint:
@@ -26,11 +29,9 @@ filesets:
     file_type: systemVerilogSource
 
   # Put specifically defined macros here
-  fifo_basic_w64_d32:
-    depend:
-      - fifo_basic
+  fifo_basic_hardened_macros:
     files:
-      - fifo/fifo_basic_w64_d32.sv
+      - fifo/fifo_basic_w81_d16.sv
     file_type: systemVerilogSource
 
 targets:
@@ -40,4 +41,4 @@ targets:
       - endpoint
       - fifo_basic
       - fifo_rob
-      - fifo_basic_w64_d32
+      - fifo_basic_hardened_macros

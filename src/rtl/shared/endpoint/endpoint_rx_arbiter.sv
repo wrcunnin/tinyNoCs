@@ -12,68 +12,49 @@ import packet_pkg::*;
 module endpoint_rx_arbiter (
     ////////////////////////////////////////////////////////
     // Requester receiving data
-    // Indicates the requester FIFO is stalling to prevent writes
-    input logic req_stall,
-
-    // Marking a request as ready to write back in request FIFO
-    output logic req_en,
-
-    // Address to compare against when returning a response
+    input  logic               req_pop_ready,
+    output logic               req_pop_valid,
     output endpoint_id_t [1:0] req_return_id,
-
-    // Information to return to the request FIFO
-    output packet_t req_packet,
+    output packet_t            req_pop_data,
 
     ////////////////////////////////////////////////////////
     // Responder receiving data
-    // Indicates the responder FIFO is stalling to prevent writes
-    input logic resp_stall,
-
-    // Marking a response as ready to input in response FIFO
-    output logic resp_en,
-
-    // Address to insert when returning a response
+    input  logic               resp_pop_ready,
+    output logic               resp_pop_valid,
     output endpoint_id_t [1:0] resp_return_id,
-
-    // Information to insert in the response FIFO
-    output packet_t resp_packet,
+    output packet_t            resp_pop_data,
 
     ////////////////////////////////////////////////////////
     // Network incoming data
-    // Indicates network is ready to put data in a buffer
-    input logic net_en,
-
-    // Stalls the network so it doesn't change its packet until FIFO is ready
-    output logic net_stall,
-
-    // Information to put in a buffer
-    input net_packet_t net_packet
+    input  logic        push_valid,
+    output logic        push_ready,
+    input  net_packet_t push_data
 );
 
   always_comb begin : packetSelection
-    req_en = 0;
-    req_packet = '0;
-    req_return_id = '0;
-    resp_en = 0;
-    resp_packet = '0;
+    req_pop_valid  = 0;
+    req_pop_data   = '0;
+    req_return_id  = '0;
+    resp_pop_valid = 0;
+    resp_pop_data  = '0;
     resp_return_id = '0;
-    net_stall = 1;
+    push_ready     = 0;
 
-    if (net_en) begin
+    if (push_valid) begin
       // If an incoming packet is a request, it goes to the response FIFO
       // - We are receiving data from an external endpoint
-      if (net_packet.request) begin
-        resp_en = 1;
-        resp_packet = net_packet.packet;
-        resp_return_id = net_packet.src_id;
-        net_stall = resp_stall;
+      if (push_data.request) begin
+        resp_pop_valid = 1;
+        resp_pop_data  = push_data.packet;
+        resp_return_id = push_data.src_id;
+        push_ready     = resp_pop_ready;
       end  // If an incoming packet is not a request, it goes to the request FIFO
            // - We are receiving data we requested/acknowledged
-      else if (!net_packet.request) begin
-        req_en = 1;
-        req_packet = net_packet.packet;
-        req_return_id = net_packet.src_id;
-        net_stall = req_stall;
+      else if (!push_data.request) begin
+        req_pop_valid = 1;
+        req_pop_data  = push_data.packet;
+        req_return_id = push_data.src_id;
+        push_ready    = req_pop_ready;
       end else assert (0);
     end
   end

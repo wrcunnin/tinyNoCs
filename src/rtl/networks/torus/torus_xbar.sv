@@ -1,3 +1,7 @@
+import packet_pkg::*;
+import mesh_pkg::*;
+import torus_pkg::*;
+
 module torus_xbar #(
     parameter int unsigned BufferRxDepth
 ) (
@@ -37,151 +41,151 @@ module torus_xbar #(
 /************************************************/
 /* north_buffer_rx                              */
 /************************************************/
-logic                       north_buffer_rx_ren;
-logic                       north_buffer_rx_wen;
-logic [NetPacketBits-1:0] north_buffer_rx_rdata;
-logic [NetPacketBits-1:0] north_buffer_rx_wdata;
-logic                       north_buffer_rx_full;
-logic                       north_buffer_rx_empty;
+logic                     north_buffer_rx_push_valid;
+logic [NetPacketBits-1:0] north_buffer_rx_push_data;
+logic                     north_buffer_rx_push_ready;
+logic                     north_buffer_rx_pop_valid;
+logic [NetPacketBits-1:0] north_buffer_rx_pop_data;
+logic                     north_buffer_rx_pop_ready;
 fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) north_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
-    .full(north_buffer_rx_full),
-    .empty(north_buffer_rx_empty),
-    .ren(north_buffer_rx_ren),
-    .rdata(north_buffer_rx_rdata),
-    .wen(north_buffer_rx_wen),
-    .wdata(north_buffer_rx_wdata)
+    .push_valid(north_buffer_rx_push_valid),
+    .push_data(north_buffer_rx_push_data),
+    .push_ready(north_buffer_rx_push_ready),
+    .pop_valid(north_buffer_rx_pop_valid),
+    .pop_data(north_buffer_rx_pop_data),
+    .pop_ready(north_buffer_rx_pop_ready)
 );
 
 /************************************************/
 /* south_buffer_rx                              */
 /************************************************/
-logic                       south_buffer_rx_ren;
-logic                       south_buffer_rx_wen;
-logic [NetPacketBits-1:0] south_buffer_rx_rdata;
-logic [NetPacketBits-1:0] south_buffer_rx_wdata;
-logic                       south_buffer_rx_full;
-logic                       south_buffer_rx_empty;
+logic                     south_buffer_rx_push_valid;
+logic [NetPacketBits-1:0] south_buffer_rx_push_data;
+logic                     south_buffer_rx_push_ready;
+logic                     south_buffer_rx_pop_valid;
+logic [NetPacketBits-1:0] south_buffer_rx_pop_data;
+logic                     south_buffer_rx_pop_ready;
 fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) south_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
-    .full(south_buffer_rx_full),
-    .empty(south_buffer_rx_empty),
-    .ren(south_buffer_rx_ren),
-    .rdata(south_buffer_rx_rdata),
-    .wen(south_buffer_rx_wen),
-    .wdata(south_buffer_rx_wdata)
+    .push_valid(south_buffer_rx_push_valid),
+    .push_data(south_buffer_rx_push_data),
+    .push_ready(south_buffer_rx_push_ready),
+    .pop_valid(south_buffer_rx_pop_valid),
+    .pop_data(south_buffer_rx_pop_data),
+    .pop_ready(south_buffer_rx_pop_ready)
 );
 
 /************************************************/
 /* east_buffer_rx                               */
 /************************************************/
-logic                       east_buffer_rx_ren;
-logic                       east_buffer_rx_wen;
-logic [NetPacketBits-1:0] east_buffer_rx_rdata;
-logic [NetPacketBits-1:0] east_buffer_rx_wdata;
-logic                       east_buffer_rx_full;
-logic                       east_buffer_rx_empty;
+logic                     east_buffer_rx_push_valid;
+logic [NetPacketBits-1:0] east_buffer_rx_push_data;
+logic                     east_buffer_rx_push_ready;
+logic                     east_buffer_rx_pop_valid;
+logic [NetPacketBits-1:0] east_buffer_rx_pop_data;
+logic                     east_buffer_rx_pop_ready;
 fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) east_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
-    .full(east_buffer_rx_full),
-    .empty(east_buffer_rx_empty),
-    .ren(east_buffer_rx_ren),
-    .rdata(east_buffer_rx_rdata),
-    .wen(east_buffer_rx_wen),
-    .wdata(east_buffer_rx_wdata)
+    .push_valid(east_buffer_rx_push_valid),
+    .push_data(east_buffer_rx_push_data),
+    .push_ready(east_buffer_rx_push_ready),
+    .pop_valid(east_buffer_rx_pop_valid),
+    .pop_data(east_buffer_rx_pop_data),
+    .pop_ready(east_buffer_rx_pop_ready)
 );
 
 /************************************************/
 /* west_buffer_rx                               */
 /************************************************/
-logic                       west_buffer_rx_ren;
-logic                       west_buffer_rx_wen;
-logic [NetPacketBits-1:0] west_buffer_rx_rdata;
-logic [NetPacketBits-1:0] west_buffer_rx_wdata;
-logic                       west_buffer_rx_full;
-logic                       west_buffer_rx_empty;
+logic                     west_buffer_rx_push_valid;
+logic [NetPacketBits-1:0] west_buffer_rx_push_data;
+logic                     west_buffer_rx_push_ready;
+logic                     west_buffer_rx_pop_valid;
+logic [NetPacketBits-1:0] west_buffer_rx_pop_data;
+logic                     west_buffer_rx_pop_ready;
 fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) west_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
-    .full(west_buffer_rx_full),
-    .empty(west_buffer_rx_empty),
-    .ren(west_buffer_rx_ren),
-    .rdata(west_buffer_rx_rdata),
-    .wen(west_buffer_rx_wen),
-    .wdata(west_buffer_rx_wdata)
+    .push_valid(west_buffer_rx_push_valid),
+    .push_data(west_buffer_rx_push_data),
+    .push_ready(west_buffer_rx_push_ready),
+    .pop_valid(west_buffer_rx_pop_valid),
+    .pop_data(west_buffer_rx_pop_data),
+    .pop_ready(west_buffer_rx_pop_ready)
 );
 
 /************************************************/
 /* torus_buffer_rx                               */
 /************************************************/
-logic                       torus_buffer_rx_ren;
-logic                       torus_buffer_rx_wen;
-logic [NetPacketBits-1:0] torus_buffer_rx_rdata;
-logic [NetPacketBits-1:0] torus_buffer_rx_wdata;
-logic                       torus_buffer_rx_full;
-logic                       torus_buffer_rx_empty;
+logic                     torus_buffer_rx_push_valid;
+logic [NetPacketBits-1:0] torus_buffer_rx_push_data;
+logic                     torus_buffer_rx_push_ready;
+logic                     torus_buffer_rx_pop_valid;
+logic [NetPacketBits-1:0] torus_buffer_rx_pop_data;
+logic                     torus_buffer_rx_pop_ready;
 fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) torus_buffer_rx (
     .CLK(CLK),
     .nRST(nRST),
-    .full(torus_buffer_rx_full),
-    .empty(torus_buffer_rx_empty),
-    .ren(torus_buffer_rx_ren),
-    .rdata(torus_buffer_rx_rdata),
-    .wen(torus_buffer_rx_wen),
-    .wdata(torus_buffer_rx_wdata)
+    .push_valid(torus_buffer_rx_push_valid),
+    .push_data(torus_buffer_rx_push_data),
+    .push_ready(torus_buffer_rx_push_ready),
+    .pop_valid(torus_buffer_rx_pop_valid),
+    .pop_data(torus_buffer_rx_pop_data),
+    .pop_ready(torus_buffer_rx_pop_ready)
 );
 
 /************************************************/
 /* torus_xbarb                                   */
 /************************************************/
-logic        torus_xbarb_north_stall_tx;
-logic        torus_xbarb_north_en_tx;
-net_packet_t torus_xbarb_north_packet_tx;
-logic        torus_xbarb_north_stall_rx;
-logic        torus_xbarb_north_en_rx;
-net_packet_t torus_xbarb_north_packet_rx;
-logic        torus_xbarb_south_stall_tx;
-logic        torus_xbarb_south_en_tx;
-net_packet_t torus_xbarb_south_packet_tx;
-logic        torus_xbarb_south_stall_rx;
-logic        torus_xbarb_south_en_rx;
-net_packet_t torus_xbarb_south_packet_rx;
-logic        torus_xbarb_east_stall_tx;
-logic        torus_xbarb_east_en_tx;
-net_packet_t torus_xbarb_east_packet_tx;
-logic        torus_xbarb_east_stall_rx;
-logic        torus_xbarb_east_en_rx;
-net_packet_t torus_xbarb_east_packet_rx;
-logic        torus_xbarb_west_stall_tx;
-logic        torus_xbarb_west_en_tx;
-net_packet_t torus_xbarb_west_packet_tx;
-logic        torus_xbarb_west_stall_rx;
-logic        torus_xbarb_west_en_rx;
-net_packet_t torus_xbarb_west_packet_rx;
-logic        torus_xbarb_torus_stall_tx;
-logic        torus_xbarb_torus_en_tx;
-net_packet_t torus_xbarb_torus_packet_tx;
-logic        torus_xbarb_torus_stall_rx;
-logic        torus_xbarb_torus_en_rx;
-net_packet_t torus_xbarb_torus_packet_rx;
+logic        torus_xbarb_north_pop_ready;
+logic        torus_xbarb_north_pop_valid;
+net_packet_t torus_xbarb_north_pop_data;
+logic        torus_xbarb_north_push_ready;
+logic        torus_xbarb_north_push_valid;
+net_packet_t torus_xbarb_north_push_data;
+logic        torus_xbarb_south_pop_ready;
+logic        torus_xbarb_south_pop_valid;
+net_packet_t torus_xbarb_south_pop_data;
+logic        torus_xbarb_south_push_ready;
+logic        torus_xbarb_south_push_valid;
+net_packet_t torus_xbarb_south_push_data;
+logic        torus_xbarb_east_pop_ready;
+logic        torus_xbarb_east_pop_valid;
+net_packet_t torus_xbarb_east_pop_data;
+logic        torus_xbarb_east_push_ready;
+logic        torus_xbarb_east_push_valid;
+net_packet_t torus_xbarb_east_push_data;
+logic        torus_xbarb_west_pop_ready;
+logic        torus_xbarb_west_pop_valid;
+net_packet_t torus_xbarb_west_pop_data;
+logic        torus_xbarb_west_push_ready;
+logic        torus_xbarb_west_push_valid;
+net_packet_t torus_xbarb_west_push_data;
+logic        torus_xbarb_torus_pop_ready;
+logic        torus_xbarb_torus_pop_valid;
+net_packet_t torus_xbarb_torus_pop_data;
+logic        torus_xbarb_torus_push_ready;
+logic        torus_xbarb_torus_push_valid;
+net_packet_t torus_xbarb_torus_push_data;
 torus_xbar_arbiter torus_xbarb (
     .CLK(nRST),
     .nRST(nRST),
@@ -191,36 +195,36 @@ torus_xbar_arbiter torus_xbarb (
     .strap_max_y(strap_max_y),
     .strap_vertical_torus(strap_vertical_torus),
     .strap_prefer_vertical(strap_prefer_vertical),
-    .north_stall_tx(torus_xbarb_north_stall_tx),
-    .north_en_tx(torus_xbarb_north_en_tx),
-    .north_packet_tx(torus_xbarb_north_packet_tx),
-    .north_stall_rx(torus_xbarb_north_stall_rx),
-    .north_en_rx(torus_xbarb_north_en_rx),
-    .north_packet_rx(torus_xbarb_north_packet_rx),
-    .south_stall_tx(torus_xbarb_south_stall_tx),
-    .south_en_tx(torus_xbarb_south_en_tx),
-    .south_packet_tx(torus_xbarb_south_packet_tx),
-    .south_stall_rx(torus_xbarb_south_stall_rx),
-    .south_en_rx(torus_xbarb_south_en_rx),
-    .south_packet_rx(torus_xbarb_south_packet_rx),
-    .east_stall_tx(torus_xbarb_east_stall_tx),
-    .east_en_tx(torus_xbarb_east_en_tx),
-    .east_packet_tx(torus_xbarb_east_packet_tx),
-    .east_stall_rx(torus_xbarb_east_stall_rx),
-    .east_en_rx(torus_xbarb_east_en_rx),
-    .east_packet_rx(torus_xbarb_east_packet_rx),
-    .west_stall_tx(torus_xbarb_west_stall_tx),
-    .west_en_tx(torus_xbarb_west_en_tx),
-    .west_packet_tx(torus_xbarb_west_packet_tx),
-    .west_stall_rx(torus_xbarb_west_stall_rx),
-    .west_en_rx(torus_xbarb_west_en_rx),
-    .west_packet_rx(torus_xbarb_west_packet_rx),
-    .torus_stall_tx(torus_xbarb_torus_stall_tx),
-    .torus_en_tx(torus_xbarb_torus_en_tx),
-    .torus_packet_tx(torus_xbarb_torus_packet_tx),
-    .torus_stall_rx(torus_xbarb_torus_stall_rx),
-    .torus_en_rx(torus_xbarb_torus_en_rx),
-    .torus_packet_rx(torus_xbarb_torus_packet_rx)
+    .north_pop_ready(torus_xbarb_north_pop_ready),
+    .north_pop_valid(torus_xbarb_north_pop_valid),
+    .north_pop_data(torus_xbarb_north_pop_data),
+    .north_push_ready(torus_xbarb_north_push_ready),
+    .north_push_valid(torus_xbarb_north_push_valid),
+    .north_push_data(torus_xbarb_north_push_data),
+    .south_pop_ready(torus_xbarb_south_pop_ready),
+    .south_pop_valid(torus_xbarb_south_pop_valid),
+    .south_pop_data(torus_xbarb_south_pop_data),
+    .south_push_ready(torus_xbarb_south_push_ready),
+    .south_push_valid(torus_xbarb_south_push_valid),
+    .south_push_data(torus_xbarb_south_push_data),
+    .east_pop_ready(torus_xbarb_east_pop_ready),
+    .east_pop_valid(torus_xbarb_east_pop_valid),
+    .east_pop_data(torus_xbarb_east_pop_data),
+    .east_push_ready(torus_xbarb_east_push_ready),
+    .east_push_valid(torus_xbarb_east_push_valid),
+    .east_push_data(torus_xbarb_east_push_data),
+    .west_pop_ready(torus_xbarb_west_pop_ready),
+    .west_pop_valid(torus_xbarb_west_pop_valid),
+    .west_pop_data(torus_xbarb_west_pop_data),
+    .west_push_ready(torus_xbarb_west_push_ready),
+    .west_push_valid(torus_xbarb_west_push_valid),
+    .west_push_data(torus_xbarb_west_push_data),
+    .torus_pop_ready(torus_xbarb_torus_pop_ready),
+    .torus_pop_valid(torus_xbarb_torus_pop_valid),
+    .torus_pop_data(torus_xbarb_torus_pop_data),
+    .torus_push_ready(torus_xbarb_torus_push_ready),
+    .torus_push_valid(torus_xbarb_torus_push_valid),
+    .torus_push_data(torus_xbarb_torus_push_data)
 );
 
 `CONNECT_TORUS_XBAR_INTERNALS(north);

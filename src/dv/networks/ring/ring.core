@@ -36,7 +36,7 @@ targets:
       - ring_16
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -GTxBufferDepth=8
           - -GRxBufferDepth=8
           - -GBufferRxDepth=16

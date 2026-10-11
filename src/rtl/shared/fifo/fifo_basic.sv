@@ -14,35 +14,29 @@ module fifo_basic #(
     localparam int DepthBits = $clog2(Depth)
 ) (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic              CLK,
+    input logic              nRST,
 
-    // Read enable coming from the consumer
-    input logic ren,
+    // Push Interface
+    input logic              push_valid,
+    input logic [Width-1:0]  push_data,
+    output logic             push_ready,
 
-    // Write enable coming from the producer
-    input logic wen,
-
-    // Read data to the consumer
-    output logic [Width-1:0] rdata,
-
-    // Write data from the producer
-    input logic [Width-1:0] wdata,
-
-    // Full/enable signals to go to producer/consumer
-    output logic full,
-    output logic empty
+    // Pop Interface
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data,
+    input logic              pop_ready
 );
 
   // R/W pointers
-  logic [DepthBits-1:0] rptr, next_rptr;
-  logic [DepthBits-1:0] wptr, next_wptr;
+  logic [DepthBits-1:0] pop_ptr, next_pop_ptr;
+  logic [DepthBits-1:0] push_ptr, next_push_ptr;
 
   // FIFO buffer
   logic [Depth-1:0][Width-1:0] buffer, next_buffer;
 
-  // Full/empty next signals
-  logic next_full, next_empty;
+  // push_ready/pop_valid next signals
+  logic next_push_ready, next_pop_valid;
 
   function automatic logic [DepthBits-1:0] updatePointer;
     input logic [DepthBits-1:0] pointer;
@@ -59,52 +53,54 @@ module fifo_basic #(
 
   always_ff @(posedge CLK, negedge nRST) begin : fifoBasicFF
     if (!nRST) begin
-      buffer <= '0;
-      rptr   <= '0;
-      wptr   <= '0;
-      full   <= '0;
-      empty  <= '1;
+      buffer     <= '0;
+      pop_ptr    <= '0;
+      push_ptr   <= '0;
+    // TODO(wrcunnin): make push_ready deassert when in reset, but assert when out. maybe when sync reset is added?
+      push_ready <= '1;
+      pop_valid  <= '0;
     end else begin
-      buffer <= next_buffer;
-      rptr   <= next_rptr;
-      wptr   <= next_wptr;
-      full   <= next_full;
-      empty  <= next_empty;
+      buffer     <= next_buffer;
+      pop_ptr    <= next_pop_ptr;
+      push_ptr   <= next_push_ptr;
+      push_ready <= next_push_ready;
+      pop_valid  <= next_pop_valid;
     end
   end
 
   always_comb begin : entryUpdate
     next_buffer = buffer;
-    next_rptr = rptr;
-    next_wptr = wptr;
-    rdata = buffer[rptr];
+    next_pop_ptr = pop_ptr;
+    next_push_ptr = push_ptr;
+    pop_data = buffer[pop_ptr];
 
-    // read the data from the buffer & update rptr
-    if (ren && !empty) begin
-      next_rptr = updatePointer(rptr);
+    // read the data from the buffer & update pop_ptr
+    if (pop_ready && pop_valid) begin
+      next_pop_ptr = updatePointer(pop_ptr);
     end
 
-    // write the data to the buffer & update wptr
-    if (wen && !full) begin
-      next_buffer[wptr] = wdata;
-      next_wptr = updatePointer(wptr);
+    // write the data to the buffer & update push_ptr
+    if (push_valid && push_ready) begin
+      next_buffer[push_ptr] = push_data;
+      next_push_ptr = updatePointer(push_ptr);
     end
   end
 
-  always_comb begin : controlFullEmpty
-    next_full  = full;
-    next_empty = empty;
+  always_comb begin : controlpush_readypop_valid
+    next_push_ready = push_ready;
+    next_pop_valid = pop_valid;
 
-    // if we're writing to the buffer & its not full, we need
-    // to assert empty is 0 and full is 1 if ptr's are equal
-    if (wen && !full) begin
-      next_full  = next_rptr == next_wptr;
-      next_empty = 0;
-    end  // if we're read from the buffer & its not empty, we need
-         // to assert full is 0 and empty is 1 if ptr's are equal
-    else if (ren && !empty) begin
-      next_full  = 0;
-      next_empty = next_rptr == next_wptr;
+    // if we're pushing valid data  we need assert pop_valid next cycle
+    // and push_ready is 0 if ptr's are equal
+    if (push_valid && push_ready) begin
+      next_push_ready = next_pop_ptr != next_push_ptr;
+      next_pop_valid = 1'b1;
+    end
+    // if pop interface consumes the data, we assert push_ready next cycle
+    // and pop_valid to 0 if ptr's are equal
+    else if (pop_ready && pop_valid) begin
+      next_push_ready = 1'b1;
+      next_pop_valid = next_pop_ptr != next_push_ptr;
     end
   end
 
@@ -116,9 +112,9 @@ module fifo_basic #(
   end
   always_comb begin
     next_occupancy = occupancy;
-    if (wen && !full) next_occupancy = next_occupancy + 1;
+    if (push_valid && push_ready) next_occupancy = next_occupancy + 1;
 
-    if (ren && !empty) next_occupancy = next_occupancy - 1;
+    if (pop_ready && pop_valid) next_occupancy = next_occupancy - 1;
   end
 `endif
 

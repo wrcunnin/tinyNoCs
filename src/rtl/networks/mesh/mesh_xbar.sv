@@ -1,7 +1,8 @@
 module mesh_xbar #(
     parameter int unsigned BufferRxDepth
 ) (
-    input logic CLK, nRST,
+    input logic CLK,
+    nRST,
 
     ////////////////////////////////////////////////////////
     // Straps
@@ -9,7 +10,6 @@ module mesh_xbar #(
     input endpoint_id_t strap_pos_y,
     input endpoint_id_t strap_max_x,
     input endpoint_id_t strap_max_y,
-
     input logic         strap_prefer_vertical,
 
     ////////////////////////////////////////////////////////
@@ -29,162 +29,162 @@ module mesh_xbar #(
     `CREATE_MESH_XBAR_IO(east)
 );
 
-/************************************************/
-/* north_buffer_rx                              */
-/************************************************/
-logic                       north_buffer_rx_ren;
-logic                       north_buffer_rx_wen;
-logic [NetPacketBits-1:0] north_buffer_rx_rdata;
-logic [NetPacketBits-1:0] north_buffer_rx_wdata;
-logic                       north_buffer_rx_full;
-logic                       north_buffer_rx_empty;
-fifo_basic #(
-    .Depth(BufferRxDepth),
-    .Width(NetPacketBits)
-) north_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
-    .full(north_buffer_rx_full),
-    .empty(north_buffer_rx_empty),
-    .ren(north_buffer_rx_ren),
-    .rdata(north_buffer_rx_rdata),
-    .wen(north_buffer_rx_wen),
-    .wdata(north_buffer_rx_wdata)
-);
+  /************************************************/
+  /* north_buffer_rx                              */
+  /************************************************/
+  logic                     north_buffer_rx_push_valid;
+  logic [NetPacketBits-1:0] north_buffer_rx_push_data;
+  logic                     north_buffer_rx_push_ready;
+  logic                     north_buffer_rx_pop_valid;
+  logic [NetPacketBits-1:0] north_buffer_rx_pop_data;
+  logic                     north_buffer_rx_pop_ready;
+  fifo_basic #(
+      .Depth(BufferRxDepth),
+      .Width(NetPacketBits)
+  ) north_buffer_rx (
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(north_buffer_rx_push_valid),
+      .push_data (north_buffer_rx_push_data),
+      .push_ready(north_buffer_rx_push_ready),
+      .pop_valid (north_buffer_rx_pop_valid),
+      .pop_data  (north_buffer_rx_pop_data),
+      .pop_ready (north_buffer_rx_pop_ready)
+  );
 
-/************************************************/
-/* south_buffer_rx                              */
-/************************************************/
-logic                       south_buffer_rx_ren;
-logic                       south_buffer_rx_wen;
-logic [NetPacketBits-1:0] south_buffer_rx_rdata;
-logic [NetPacketBits-1:0] south_buffer_rx_wdata;
-logic                       south_buffer_rx_full;
-logic                       south_buffer_rx_empty;
-fifo_basic #(
-    .Depth(BufferRxDepth),
-    .Width(NetPacketBits)
-) south_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
-    .full(south_buffer_rx_full),
-    .empty(south_buffer_rx_empty),
-    .ren(south_buffer_rx_ren),
-    .rdata(south_buffer_rx_rdata),
-    .wen(south_buffer_rx_wen),
-    .wdata(south_buffer_rx_wdata)
-);
+  /************************************************/
+  /* south_buffer_rx                              */
+  /************************************************/
+  logic                     south_buffer_rx_push_valid;
+  logic [NetPacketBits-1:0] south_buffer_rx_push_data;
+  logic                     south_buffer_rx_push_ready;
+  logic                     south_buffer_rx_pop_valid;
+  logic [NetPacketBits-1:0] south_buffer_rx_pop_data;
+  logic                     south_buffer_rx_pop_ready;
+  fifo_basic #(
+      .Depth(BufferRxDepth),
+      .Width(NetPacketBits)
+  ) south_buffer_rx (
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(south_buffer_rx_push_valid),
+      .push_data (south_buffer_rx_push_data),
+      .push_ready(south_buffer_rx_push_ready),
+      .pop_valid (south_buffer_rx_pop_valid),
+      .pop_data  (south_buffer_rx_pop_data),
+      .pop_ready (south_buffer_rx_pop_ready)
+  );
 
-/************************************************/
-/* east_buffer_rx                               */
-/************************************************/
-logic                       east_buffer_rx_ren;
-logic                       east_buffer_rx_wen;
-logic [NetPacketBits-1:0] east_buffer_rx_rdata;
-logic [NetPacketBits-1:0] east_buffer_rx_wdata;
-logic                       east_buffer_rx_full;
-logic                       east_buffer_rx_empty;
-fifo_basic #(
-    .Depth(BufferRxDepth),
-    .Width(NetPacketBits)
-) east_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
-    .full(east_buffer_rx_full),
-    .empty(east_buffer_rx_empty),
-    .ren(east_buffer_rx_ren),
-    .rdata(east_buffer_rx_rdata),
-    .wen(east_buffer_rx_wen),
-    .wdata(east_buffer_rx_wdata)
-);
+  /************************************************/
+  /* east_buffer_rx                               */
+  /************************************************/
+  logic                     east_buffer_rx_push_valid;
+  logic [NetPacketBits-1:0] east_buffer_rx_push_data;
+  logic                     east_buffer_rx_push_ready;
+  logic                     east_buffer_rx_pop_valid;
+  logic [NetPacketBits-1:0] east_buffer_rx_pop_data;
+  logic                     east_buffer_rx_pop_ready;
+  fifo_basic #(
+      .Depth(BufferRxDepth),
+      .Width(NetPacketBits)
+  ) east_buffer_rx (
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(east_buffer_rx_push_valid),
+      .push_data (east_buffer_rx_push_data),
+      .push_ready(east_buffer_rx_push_ready),
+      .pop_valid (east_buffer_rx_pop_valid),
+      .pop_data  (east_buffer_rx_pop_data),
+      .pop_ready (east_buffer_rx_pop_ready)
+  );
 
-/************************************************/
-/* west_buffer_rx                               */
-/************************************************/
-logic                       west_buffer_rx_ren;
-logic                       west_buffer_rx_wen;
-logic [NetPacketBits-1:0] west_buffer_rx_rdata;
-logic [NetPacketBits-1:0] west_buffer_rx_wdata;
-logic                       west_buffer_rx_full;
-logic                       west_buffer_rx_empty;
-fifo_basic #(
-    .Depth(BufferRxDepth),
-    .Width(NetPacketBits)
-) west_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
-    .full(west_buffer_rx_full),
-    .empty(west_buffer_rx_empty),
-    .ren(west_buffer_rx_ren),
-    .rdata(west_buffer_rx_rdata),
-    .wen(west_buffer_rx_wen),
-    .wdata(west_buffer_rx_wdata)
-);
+  /************************************************/
+  /* west_buffer_rx                               */
+  /************************************************/
+  logic                     west_buffer_rx_push_valid;
+  logic [NetPacketBits-1:0] west_buffer_rx_push_data;
+  logic                     west_buffer_rx_push_ready;
+  logic                     west_buffer_rx_pop_valid;
+  logic [NetPacketBits-1:0] west_buffer_rx_pop_data;
+  logic                     west_buffer_rx_pop_ready;
+  fifo_basic #(
+      .Depth(BufferRxDepth),
+      .Width(NetPacketBits)
+  ) west_buffer_rx (
+      .CLK       (CLK),
+      .nRST      (nRST),
+      .push_valid(west_buffer_rx_push_valid),
+      .push_data (west_buffer_rx_push_data),
+      .push_ready(west_buffer_rx_push_ready),
+      .pop_valid (west_buffer_rx_pop_valid),
+      .pop_data  (west_buffer_rx_pop_data),
+      .pop_ready (west_buffer_rx_pop_ready)
+  );
 
-/************************************************/
-/* mesh_xbarb                                   */
-/************************************************/
-logic        mesh_xbarb_north_stall_tx;
-logic        mesh_xbarb_north_en_tx;
-net_packet_t mesh_xbarb_north_packet_tx;
-logic        mesh_xbarb_north_stall_rx;
-logic        mesh_xbarb_north_en_rx;
-net_packet_t mesh_xbarb_north_packet_rx;
-logic        mesh_xbarb_south_stall_tx;
-logic        mesh_xbarb_south_en_tx;
-net_packet_t mesh_xbarb_south_packet_tx;
-logic        mesh_xbarb_south_stall_rx;
-logic        mesh_xbarb_south_en_rx;
-net_packet_t mesh_xbarb_south_packet_rx;
-logic        mesh_xbarb_east_stall_tx;
-logic        mesh_xbarb_east_en_tx;
-net_packet_t mesh_xbarb_east_packet_tx;
-logic        mesh_xbarb_east_stall_rx;
-logic        mesh_xbarb_east_en_rx;
-net_packet_t mesh_xbarb_east_packet_rx;
-logic        mesh_xbarb_west_stall_tx;
-logic        mesh_xbarb_west_en_tx;
-net_packet_t mesh_xbarb_west_packet_tx;
-logic        mesh_xbarb_west_stall_rx;
-logic        mesh_xbarb_west_en_rx;
-net_packet_t mesh_xbarb_west_packet_rx;
-mesh_xbar_arbiter mesh_xbarb (
-    .CLK,
-    .nRST,
-    .strap_pos_x,
-    .strap_pos_y,
-    .strap_max_x,
-    .strap_max_y,
-    .strap_prefer_vertical,
-    .north_stall_tx(mesh_xbarb_north_stall_tx),
-    .north_en_tx(mesh_xbarb_north_en_tx),
-    .north_packet_tx(mesh_xbarb_north_packet_tx),
-    .north_stall_rx(mesh_xbarb_north_stall_rx),
-    .north_en_rx(mesh_xbarb_north_en_rx),
-    .north_packet_rx(mesh_xbarb_north_packet_rx),
-    .south_stall_tx(mesh_xbarb_south_stall_tx),
-    .south_en_tx(mesh_xbarb_south_en_tx),
-    .south_packet_tx(mesh_xbarb_south_packet_tx),
-    .south_stall_rx(mesh_xbarb_south_stall_rx),
-    .south_en_rx(mesh_xbarb_south_en_rx),
-    .south_packet_rx(mesh_xbarb_south_packet_rx),
-    .east_stall_tx(mesh_xbarb_east_stall_tx),
-    .east_en_tx(mesh_xbarb_east_en_tx),
-    .east_packet_tx(mesh_xbarb_east_packet_tx),
-    .east_stall_rx(mesh_xbarb_east_stall_rx),
-    .east_en_rx(mesh_xbarb_east_en_rx),
-    .east_packet_rx(mesh_xbarb_east_packet_rx),
-    .west_stall_tx(mesh_xbarb_west_stall_tx),
-    .west_en_tx(mesh_xbarb_west_en_tx),
-    .west_packet_tx(mesh_xbarb_west_packet_tx),
-    .west_stall_rx(mesh_xbarb_west_stall_rx),
-    .west_en_rx(mesh_xbarb_west_en_rx),
-    .west_packet_rx(mesh_xbarb_west_packet_rx)
-);
+  /************************************************/
+  /* mesh_xbarb                                   */
+  /************************************************/
+  logic        mesh_xbarb_north_pop_ready;
+  logic        mesh_xbarb_north_pop_valid;
+  net_packet_t mesh_xbarb_north_pop_data;
+  logic        mesh_xbarb_north_push_ready;
+  logic        mesh_xbarb_north_push_valid;
+  net_packet_t mesh_xbarb_north_push_data;
+  logic        mesh_xbarb_south_pop_ready;
+  logic        mesh_xbarb_south_pop_valid;
+  net_packet_t mesh_xbarb_south_pop_data;
+  logic        mesh_xbarb_south_push_ready;
+  logic        mesh_xbarb_south_push_valid;
+  net_packet_t mesh_xbarb_south_push_data;
+  logic        mesh_xbarb_east_pop_ready;
+  logic        mesh_xbarb_east_pop_valid;
+  net_packet_t mesh_xbarb_east_pop_data;
+  logic        mesh_xbarb_east_push_ready;
+  logic        mesh_xbarb_east_push_valid;
+  net_packet_t mesh_xbarb_east_push_data;
+  logic        mesh_xbarb_west_pop_ready;
+  logic        mesh_xbarb_west_pop_valid;
+  net_packet_t mesh_xbarb_west_pop_data;
+  logic        mesh_xbarb_west_push_ready;
+  logic        mesh_xbarb_west_push_valid;
+  net_packet_t mesh_xbarb_west_push_data;
+  mesh_xbar_arbiter mesh_xbarb (
+      .CLK,
+      .nRST,
+      .strap_pos_x,
+      .strap_pos_y,
+      .strap_max_x,
+      .strap_max_y,
+      .strap_prefer_vertical,
+      .north_pop_ready (mesh_xbarb_north_pop_ready),
+      .north_pop_valid (mesh_xbarb_north_pop_valid),
+      .north_pop_data  (mesh_xbarb_north_pop_data),
+      .north_push_ready(mesh_xbarb_north_push_ready),
+      .north_push_valid(mesh_xbarb_north_push_valid),
+      .north_push_data (mesh_xbarb_north_push_data),
+      .south_pop_ready (mesh_xbarb_south_pop_ready),
+      .south_pop_valid (mesh_xbarb_south_pop_valid),
+      .south_pop_data  (mesh_xbarb_south_pop_data),
+      .south_push_ready(mesh_xbarb_south_push_ready),
+      .south_push_valid(mesh_xbarb_south_push_valid),
+      .south_push_data (mesh_xbarb_south_push_data),
+      .east_pop_ready  (mesh_xbarb_east_pop_ready),
+      .east_pop_valid  (mesh_xbarb_east_pop_valid),
+      .east_pop_data   (mesh_xbarb_east_pop_data),
+      .east_push_ready (mesh_xbarb_east_push_ready),
+      .east_push_valid (mesh_xbarb_east_push_valid),
+      .east_push_data  (mesh_xbarb_east_push_data),
+      .west_pop_ready  (mesh_xbarb_west_pop_ready),
+      .west_pop_valid  (mesh_xbarb_west_pop_valid),
+      .west_pop_data   (mesh_xbarb_west_pop_data),
+      .west_push_ready (mesh_xbarb_west_push_ready),
+      .west_push_valid (mesh_xbarb_west_push_valid),
+      .west_push_data  (mesh_xbarb_west_push_data)
+  );
 
-`CONNECT_MESH_XBAR_INTERNALS(north);
-`CONNECT_MESH_XBAR_INTERNALS(west);
-`CONNECT_MESH_XBAR_INTERNALS(south);
-`CONNECT_MESH_XBAR_INTERNALS(east);
+  `CONNECT_MESH_XBAR_INTERNALS(north);
+  `CONNECT_MESH_XBAR_INTERNALS(west);
+  `CONNECT_MESH_XBAR_INTERNALS(south);
+  `CONNECT_MESH_XBAR_INTERNALS(east);
 
 endmodule

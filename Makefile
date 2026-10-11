@@ -57,14 +57,6 @@ torus-all: torus-4x4 torus-5x3
 
 
 ###################################
-# Endpoint Test Benches
-###################################
-endpoint:
-	fusesoc --cores-root . run --build --target tb_endpoint tinynocs:src:dv-shared
-	build/tinynocs_src_dv-shared_0.0.1/tb_endpoint-verilator/Vendpoint --trace-en
-	@echo "Built and ran an endpoint with basic params\n"
-
-###################################
 # FIFO Basic Test Benches
 ###################################
 fifo-basic:
@@ -114,4 +106,4 @@ clean:
 	rm -rf build waveform.fst.hier waveform.fst
 
 clean-synth: clean
-	rm -rf scripts/**/runs
+	rm -rf scripts/**/runs verilog-*

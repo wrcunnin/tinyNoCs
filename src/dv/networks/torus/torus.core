@@ -36,7 +36,7 @@ targets:
     <<: *default
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -GTxBufferDepth=8
           - -GRxBufferDepth=8
           - -GBufferRxDepth=16
@@ -45,7 +45,7 @@ targets:
     <<: *default
     tools:
       verilator:
-        verilator_options_append:
+        verilator_options:
           - -DUSE_5x3
           - -GTxBufferDepth=8
           - -GRxBufferDepth=8
