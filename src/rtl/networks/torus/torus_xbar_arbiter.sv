@@ -13,7 +13,7 @@ import mesh_pkg::*;
 import torus_pkg::*;
 
 module torus_xbar_arbiter (
-    input logic CLK, nRST,
+    input logic clk, nrst,
 
     ////////////////////////////////////////////////////////
     // Straps

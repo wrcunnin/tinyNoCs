@@ -105,13 +105,13 @@ void signal_handler (int signum) {
 }
 
 void tick (DUT_TYPE& dut, VerilatedFstC& trace) {
-    dut.CLK = 0;
+    dut.clk = 0;
     dut.eval();
     if (config.trace_en)
         trace.dump(sim_time);
     sim_time++;
 
-    dut.CLK = 1;
+    dut.clk = 1;
     dut.eval();
     if (config.trace_en)
         trace.dump(sim_time);
@@ -125,21 +125,21 @@ void tick (DUT_TYPE& dut, VerilatedFstC& trace) {
 
 void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
     // Initialize signals
-    dut.CLK = 0;
-    dut.nRST = 0;
+    dut.clk = 0;
+    dut.nrst = 0;
     reset_producer(dut);
     reset_consumer(dut);
 
     tick(dut, trace);
-    dut.nRST = 0;
+    dut.nrst = 0;
     tick(dut, trace);
-    dut.nRST = 1;
+    dut.nrst = 1;
     tick(dut, trace);
 
     tick(dut, trace);
-    dut.nRST = 0;
+    dut.nrst = 0;
     tick(dut, trace);
-    dut.nRST = 1;
+    dut.nrst = 1;
     tick(dut, trace);
 }
 
@@ -167,7 +167,7 @@ void consume (DUT_TYPE& dut, VerilatedFstC& trace) {
     dut.pop_ready = 1;
 
     // consume has to tick for the TB unfortunately
-    dut.CLK = 0;
+    dut.clk = 0;
     dut.eval();
     if (config.trace_en)
         trace.dump(sim_time);
@@ -185,7 +185,7 @@ void consume (DUT_TYPE& dut, VerilatedFstC& trace) {
     producerQueue.pop_front();
 
     // consume has to tick for the TB unfortunately
-    dut.CLK = 1;
+    dut.clk = 1;
     dut.eval();
     if (config.trace_en)
         trace.dump(sim_time);

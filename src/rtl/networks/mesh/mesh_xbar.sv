@@ -1,8 +1,8 @@
 module mesh_xbar #(
     parameter int unsigned BufferRxDepth
 ) (
-    input logic CLK,
-    nRST,
+    input logic clk,
+    nrst,
 
     ////////////////////////////////////////////////////////
     // Straps
@@ -42,8 +42,8 @@ module mesh_xbar #(
       .Depth(BufferRxDepth),
       .Width(NetPacketBits)
   ) north_buffer_rx (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(north_buffer_rx_push_valid),
       .push_data (north_buffer_rx_push_data),
       .push_ready(north_buffer_rx_push_ready),
@@ -65,8 +65,8 @@ module mesh_xbar #(
       .Depth(BufferRxDepth),
       .Width(NetPacketBits)
   ) south_buffer_rx (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(south_buffer_rx_push_valid),
       .push_data (south_buffer_rx_push_data),
       .push_ready(south_buffer_rx_push_ready),
@@ -88,8 +88,8 @@ module mesh_xbar #(
       .Depth(BufferRxDepth),
       .Width(NetPacketBits)
   ) east_buffer_rx (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(east_buffer_rx_push_valid),
       .push_data (east_buffer_rx_push_data),
       .push_ready(east_buffer_rx_push_ready),
@@ -111,8 +111,8 @@ module mesh_xbar #(
       .Depth(BufferRxDepth),
       .Width(NetPacketBits)
   ) west_buffer_rx (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(west_buffer_rx_push_valid),
       .push_data (west_buffer_rx_push_data),
       .push_ready(west_buffer_rx_push_ready),
@@ -149,8 +149,8 @@ module mesh_xbar #(
   logic        mesh_xbarb_west_push_valid;
   net_packet_t mesh_xbarb_west_push_data;
   mesh_xbar_arbiter mesh_xbarb (
-      .CLK,
-      .nRST,
+      .clk,
+      .nrst,
       .strap_pos_x,
       .strap_pos_y,
       .strap_max_x,

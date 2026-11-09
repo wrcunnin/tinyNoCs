@@ -14,8 +14,8 @@ module fifo_basic #(
     localparam int DepthBits = $clog2(Depth)
 ) (
     // Clock, async reset
-    input logic              CLK,
-    input logic              nRST,
+    input logic              clk,
+    input logic              nrst,
 
     // Push Interface
     input logic              push_valid,
@@ -51,8 +51,8 @@ module fifo_basic #(
     end
   endfunction
 
-  always_ff @(posedge CLK, negedge nRST) begin : fifoBasicFF
-    if (!nRST) begin
+  always_ff @(posedge clk, negedge nrst) begin : fifoBasicFF
+    if (!nrst) begin
       buffer     <= '0;
       pop_ptr    <= '0;
       push_ptr   <= '0;
@@ -106,8 +106,8 @@ module fifo_basic #(
 
 `ifndef SYNTHESIS
   logic [DepthBits:0] occupancy, next_occupancy;
-  always_ff @(posedge CLK, negedge nRST) begin
-    if (!nRST) occupancy <= '0;
+  always_ff @(posedge clk, negedge nrst) begin
+    if (!nrst) occupancy <= '0;
     else occupancy <= next_occupancy;
   end
   always_comb begin

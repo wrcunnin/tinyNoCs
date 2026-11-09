@@ -13,8 +13,8 @@ import mesh_pkg::*;
 import torus_pkg::*;
 
 module torus_xbar_arbiter_out_ctrl (
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     // Output is ready
     input logic pop_ready,
@@ -56,8 +56,8 @@ module torus_xbar_arbiter_out_ctrl (
   assign is1gt3 = lru[1] > lru[3];
   assign is2gt3 = lru[2] > lru[3];
 
-  always_ff @(posedge CLK, negedge nRST) begin : LRU_STATE
-    if (!nRST) begin
+  always_ff @(posedge clk, negedge nrst) begin : LRU_STATE
+    if (!nrst) begin
       lru[0] <= 2'd0;
       lru[1] <= 2'd1;
       lru[2] <= 2'd2;

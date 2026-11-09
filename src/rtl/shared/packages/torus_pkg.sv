@@ -58,8 +58,8 @@ logic        [3:0] ``direction``_torus_xbarb_out_ctrl_push_ready; \
 logic        [3:0] ``direction``_torus_xbarb_out_ctrl_push_valid; \
 net_packet_t [3:0] ``direction``_torus_xbarb_out_ctrl_push_data; \
 torus_xbar_arbiter_out_ctrl ``direction``_torus_xbarb_out_ctrl ( \
-    .CLK(CLK), \
-    .nRST(nRST), \
+    .clk(clk), \
+    .nrst(nrst), \
     .pop_ready(``direction``_torus_xbarb_out_ctrl_pop_ready), \
     .pop_valid(``direction``_torus_xbarb_out_ctrl_pop_valid), \
     .pop_data(``direction``_torus_xbarb_out_ctrl_pop_data), \
@@ -149,8 +149,8 @@ assign torus_xbar_``xid``_``yid``_strap_prefer_vertical = prefer_vertical; \
 torus_xbar #( \
     .BufferRxDepth(BufferRxDepth) \
 ) torus_xbar_``xid``_``yid`` ( \
-    .CLK(CLK), \
-    .nRST(nRST), \
+    .clk(clk), \
+    .nrst(nrst), \
     .strap_pos_x(torus_xbar_``xid``_``yid``_strap_pos_x), \
     .strap_pos_y(torus_xbar_``xid``_``yid``_strap_pos_y), \
     .strap_max_x(torus_xbar_``xid``_``yid``_strap_max_x), \

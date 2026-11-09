@@ -13,8 +13,8 @@ import ring_pkg::*;
 
 module ring_xbar_arbiter (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     ////////////////////////////////////////////////////////
     // Straps
@@ -53,8 +53,8 @@ module ring_xbar_arbiter (
 
   ring_xbar_arbiter_lru_state_t lru, next_lru, selected;
 
-  always_ff @(posedge CLK, negedge nRST) begin : RXBAR_LRU
-    if (!nRST) lru <= RXBAR_EP;
+  always_ff @(posedge clk, negedge nrst) begin : RXBAR_LRU
+    if (!nrst) lru <= RXBAR_EP;
 
     // if the network is enabled & ready, update the LRU state
     else if (net_pop_valid && net_pop_ready) lru <= next_lru;

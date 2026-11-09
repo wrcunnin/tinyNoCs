@@ -46,8 +46,8 @@ endpoint #( \
     .RxBufferDepth(RxBufferDepth), \
     .NetworkType(kRing) \
 ) endpoint_``id`` ( \
-    .CLK(CLK), \
-    .nRST(nRST), \
+    .clk(clk), \
+    .nrst(nrst), \
     .strap_endpoint_id_x(endpoint_``id``_strap_endpoint_id_x), \
     .strap_endpoint_id_y(endpoint_``id``_strap_endpoint_id_y), \
     .req_full(endpoint_``id``_req_full), \
@@ -90,8 +90,8 @@ ring_xbar #( \
     .NetBufferRxDepth(2*BufferRxDepth), \
     .EpBufferRxDepth(BufferRxDepth) \
 ) rxbar_``id`` ( \
-    .CLK(CLK), \
-    .nRST(nRST), \
+    .clk(clk), \
+    .nrst(nrst), \
     .strap_endpoint_id(endpoint_id_t'(id)), \
     .net_push_ready(rxbar_``id``_net_push_ready), \
     .net_push_valid(rxbar_``id``_net_push_valid), \

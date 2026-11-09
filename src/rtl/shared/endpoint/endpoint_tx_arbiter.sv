@@ -15,8 +15,8 @@ module endpoint_tx_arbiter #(
     parameter network_type_t NetworkType = 0
 ) (
     // Clock, async reset
-    input logic CLK,
-    nRST,
+    input logic clk,
+    nrst,
 
     // Straps
     input endpoint_id_t strap_endpoint_id_x,
@@ -52,8 +52,8 @@ module endpoint_tx_arbiter #(
 
   endpoint_id_t [1:0] dst_id;
 
-  always_ff @(posedge CLK, negedge nRST) begin : EPTXARB_LRU
-    if (!nRST) lru <= EPTXARB_REQ;
+  always_ff @(posedge clk, negedge nrst) begin : EPTXARB_LRU
+    if (!nrst) lru <= EPTXARB_REQ;
 
     // if the network is enabled & ready, update the LRU state
     else if (pop_valid && pop_ready) lru <= next_lru;

@@ -16,8 +16,8 @@ module ring_xbar #(
     parameter int unsigned EpBufferRxDepth  = 8
 ) (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     ////////////////////////////////////////////////////////
     // Straps
@@ -63,8 +63,8 @@ module ring_xbar #(
       .Depth(NetBufferRxDepth),
       .Width(NetPacketBits)
   ) net_buffer_rx (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(net_buffer_rx_push_valid),
       .push_data (net_buffer_rx_push_data),
       .push_ready(net_buffer_rx_push_ready),
@@ -88,8 +88,8 @@ module ring_xbar #(
       .Depth(EpBufferRxDepth),
       .Width(NetPacketBits)
   ) endpoint_buffer_rx (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(endpoint_buffer_rx_push_valid),
       .push_data (endpoint_buffer_rx_push_data),
       .push_ready(endpoint_buffer_rx_push_ready),
@@ -115,8 +115,8 @@ module ring_xbar #(
   logic        xbarb_endpoint_pop_valid;
   net_packet_t xbarb_endpoint_pop_data;
   ring_xbar_arbiter xbarb (
-      .CLK,
-      .nRST,
+      .clk,
+      .nrst,
       .strap_endpoint_id,
       .net_push_ready     (xbarb_net_push_ready),
       .net_push_valid     (xbarb_net_push_valid),

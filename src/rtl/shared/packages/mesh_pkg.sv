@@ -124,8 +124,8 @@ logic        [2:0] ``direction``_mesh_xbarb_out_ctrl_push_ready; \
 logic        [2:0] ``direction``_mesh_xbarb_out_ctrl_push_valid; \
 net_packet_t [2:0] ``direction``_mesh_xbarb_out_ctrl_push_data; \
 mesh_xbar_arbiter_out_ctrl ``direction``_mesh_xbarb_out_ctrl ( \
-    .CLK(CLK), \
-    .nRST(nRST), \
+    .clk(clk), \
+    .nrst(nrst), \
     .pop_ready(``direction``_mesh_xbarb_out_ctrl_pop_ready), \
     .pop_valid(``direction``_mesh_xbarb_out_ctrl_pop_valid), \
     .pop_data(``direction``_mesh_xbarb_out_ctrl_pop_data), \
@@ -211,8 +211,8 @@ assign mesh_xbar_``xid``_``yid``_strap_prefer_vertical = 1'b1; \
 mesh_xbar #( \
     .BufferRxDepth(BufferRxDepth) \
 ) mesh_xbar_``xid``_``yid`` ( \
-    .CLK(CLK), \
-    .nRST(nRST), \
+    .clk(clk), \
+    .nrst(nrst), \
     .strap_pos_x(mesh_xbar_``xid``_``yid``_strap_pos_x), \
     .strap_pos_y(mesh_xbar_``xid``_``yid``_strap_pos_y), \
     .strap_max_x(mesh_xbar_``xid``_``yid``_strap_max_x), \
@@ -277,8 +277,8 @@ endpoint #( \
     .RxBufferDepth(RxBufferDepth), \
     .NetworkType(kMesh) \
 ) endpoint_``id`` ( \
-    .CLK(CLK), \
-    .nRST(nRST), \
+    .clk(clk), \
+    .nrst(nrst), \
     .strap_endpoint_id_x(endpoint_``id``_strap_endpoint_id_x), \
     .strap_endpoint_id_y(endpoint_``id``_strap_endpoint_id_y), \
     .req_full(endpoint_``id``_req_full), \

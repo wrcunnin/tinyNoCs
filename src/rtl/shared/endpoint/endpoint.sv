@@ -28,8 +28,8 @@ module endpoint #(
     parameter network_type_t NetworkType = kRing
 ) (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     // Straps
     input endpoint_id_t strap_endpoint_id_x,
@@ -97,8 +97,8 @@ module endpoint #(
   fifo_rob #(
       .Depth(TxBufferDepth)
   ) endpoint_tx_buffer (
-      .CLK           (CLK),
-      .nRST          (nRST),
+      .clk           (clk),
+      .nrst          (nrst),
       .fifo_rob_full (endpoint_tx_buffer_fifo_rob_full),
       .fifo_rob_empty(endpoint_tx_buffer_fifo_rob_empty),
       .req_push_valid(endpoint_tx_buffer_req_push_valid),
@@ -137,8 +137,8 @@ module endpoint #(
   fifo_rob #(
       .Depth(RxBufferDepth)
   ) endpoint_rx_buffer (
-      .CLK           (CLK),
-      .nRST          (nRST),
+      .clk           (clk),
+      .nrst          (nrst),
       .fifo_rob_full (endpoint_rx_buffer_fifo_rob_full),
       .fifo_rob_empty(endpoint_rx_buffer_fifo_rob_empty),
       .req_push_valid(endpoint_rx_buffer_req_push_valid),
@@ -170,8 +170,8 @@ module endpoint #(
       .Depth(2 * RxBufferDepth),
       .Width(NetPacketBits)
   ) net_rx_buffer (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(net_rx_buffer_push_valid),
       .push_data (net_rx_buffer_push_data),
       .push_ready(net_rx_buffer_push_ready),
@@ -194,8 +194,8 @@ module endpoint #(
       .Depth(RxBufferDepth),
       .Width(2 * EndpointIdBits)
   ) return_id_buffer (
-      .CLK       (CLK),
-      .nRST      (nRST),
+      .clk       (clk),
+      .nrst      (nrst),
       .push_valid(return_id_buffer_push_valid),
       .push_data (return_id_buffer_push_data),
       .push_ready(return_id_buffer_push_ready),
@@ -252,8 +252,8 @@ module endpoint #(
   endpoint_tx_arbiter #(
       .NetworkType(NetworkType)
   ) tx_arbiter (
-      .CLK,
-      .nRST,
+      .clk,
+      .nrst,
       .strap_endpoint_id_x,
       .strap_endpoint_id_y,
       .req_push_ready (tx_arbiter_req_push_ready),
@@ -322,7 +322,7 @@ module endpoint #(
   // Sanity checks
   always_comb begin
     // TODO(wrcunnin): make push_ready deassert when in reset
-    if (nRST) begin
+    if (nrst) begin
       assert (!return_id_buffer_push_ready == endpoint_rx_buffer_fifo_rob_full);
       assert (!return_id_buffer_pop_valid == endpoint_rx_buffer_fifo_rob_empty);
     end

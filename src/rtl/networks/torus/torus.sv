@@ -4,8 +4,8 @@ module torus #(
     parameter int unsigned BufferRxDepth = 16
 ) (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     ////////////////////////////////////////////////////////
     // Requester sending data

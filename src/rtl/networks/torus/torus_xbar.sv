@@ -5,7 +5,7 @@ import torus_pkg::*;
 module torus_xbar #(
     parameter int unsigned BufferRxDepth
 ) (
-    input logic CLK, nRST,
+    input logic clk, nrst,
 
     ////////////////////////////////////////////////////////
     // Straps
@@ -51,8 +51,8 @@ fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) north_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
+    .clk(clk),
+    .nrst(nrst),
     .push_valid(north_buffer_rx_push_valid),
     .push_data(north_buffer_rx_push_data),
     .push_ready(north_buffer_rx_push_ready),
@@ -74,8 +74,8 @@ fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) south_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
+    .clk(clk),
+    .nrst(nrst),
     .push_valid(south_buffer_rx_push_valid),
     .push_data(south_buffer_rx_push_data),
     .push_ready(south_buffer_rx_push_ready),
@@ -97,8 +97,8 @@ fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) east_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
+    .clk(clk),
+    .nrst(nrst),
     .push_valid(east_buffer_rx_push_valid),
     .push_data(east_buffer_rx_push_data),
     .push_ready(east_buffer_rx_push_ready),
@@ -120,8 +120,8 @@ fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) west_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
+    .clk(clk),
+    .nrst(nrst),
     .push_valid(west_buffer_rx_push_valid),
     .push_data(west_buffer_rx_push_data),
     .push_ready(west_buffer_rx_push_ready),
@@ -143,8 +143,8 @@ fifo_basic #(
     .Depth(BufferRxDepth),
     .Width(NetPacketBits)
 ) torus_buffer_rx (
-    .CLK(CLK),
-    .nRST(nRST),
+    .clk(clk),
+    .nrst(nrst),
     .push_valid(torus_buffer_rx_push_valid),
     .push_data(torus_buffer_rx_push_data),
     .push_ready(torus_buffer_rx_push_ready),
@@ -187,8 +187,8 @@ logic        torus_xbarb_torus_push_ready;
 logic        torus_xbarb_torus_push_valid;
 net_packet_t torus_xbarb_torus_push_data;
 torus_xbar_arbiter torus_xbarb (
-    .CLK(nRST),
-    .nRST(nRST),
+    .clk(nrst),
+    .nrst(nrst),
     .strap_pos_x(strap_pos_x),
     .strap_pos_y(strap_pos_y),
     .strap_max_x(strap_max_x),

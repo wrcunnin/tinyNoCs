@@ -9,8 +9,8 @@ module fifo_basic_w81_d16 #(
     localparam int DepthBits = $clog2(Depth)
 ) (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     // Push Interface
     input  logic             push_valid,

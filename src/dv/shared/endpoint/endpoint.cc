@@ -191,13 +191,13 @@ void signal_handler (int signum) {
 }
 
 void tick (DUT_TYPE& dut, VerilatedFstC& trace) {
-    dut.CLK = 0;
+    dut.clk = 0;
     dut.eval();
     if (config.trace_en)
         trace.dump(sim_time);
     sim_time++;
 
-    dut.CLK = 1;
+    dut.clk = 1;
     dut.eval();
     if (config.trace_en)
         trace.dump(sim_time);
@@ -213,23 +213,23 @@ void tick (DUT_TYPE& dut, VerilatedFstC& trace) {
 
 void reset (DUT_TYPE& dut, VerilatedFstC& trace) {
     // Initialize signals
-    dut.CLK = 0;
-    dut.nRST = 0;
+    dut.clk = 0;
+    dut.nrst = 0;
     req_reset(dut);
     resp_reset(dut);
     net_reset_tx(dut);
     net_reset_rx(dut);
 
     tick(dut, trace);
-    dut.nRST = 0;
+    dut.nrst = 0;
     tick(dut, trace);
-    dut.nRST = 1;
+    dut.nrst = 1;
     tick(dut, trace);
 
     tick(dut, trace);
-    dut.nRST = 0;
+    dut.nrst = 0;
     tick(dut, trace);
-    dut.nRST = 1;
+    dut.nrst = 1;
     tick(dut, trace);
 }
 

@@ -16,8 +16,8 @@ module fifo_rob #(
     localparam int DepthBits = $clog2(Depth)
 ) (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     // Indicating if the buffer is full and empty
     output logic fifo_rob_full,
@@ -88,8 +88,8 @@ assign req_pop  = req_pop_valid && req_pop_ready;
 assign net_push = net_push_valid && net_push_ready;
 assign net_pop  = net_pop_valid && net_pop_ready;
 
-always_ff @( posedge CLK, negedge nRST ) begin : fifoRouterFF
-    if (!nRST) begin
+always_ff @( posedge clk, negedge nrst ) begin : fifoRouterFF
+    if (!nrst) begin
         for (int i = 0; i < Depth; i++) begin
             fifo_rob_buffer[i].comp   <= 1'b0;
             fifo_rob_buffer[i].sent   <= 1'b1;
@@ -208,8 +208,8 @@ end
 
 `ifndef SYNTHESIS
 logic [DepthBits:0] occupancy, next_occupancy;
-always_ff @( posedge CLK, negedge nRST ) begin
-    if (!nRST)
+always_ff @( posedge clk, negedge nrst ) begin
+    if (!nrst)
         occupancy <= '0;
     else
         occupancy <= next_occupancy;

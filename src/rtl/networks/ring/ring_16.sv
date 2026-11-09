@@ -17,8 +17,8 @@ module ring_16 #(
     parameter int BufferRxDepth = 16
 ) (
     // Clock, async reset
-    input logic CLK,
-    input logic nRST,
+    input logic clk,
+    input logic nrst,
 
     ////////////////////////////////////////////////////////
     // Requester sending data
